@@ -34,11 +34,10 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
     let preReleaseChecksCompleted: boolean | undefined = undefined;
 
     if (status === "occupied") {
-      occupiedSince = subHours(new Date(), Math.floor(Math.random() * 8)).toISOString(); // Occupied within last 8 hours
-      preUnloadingChecksCompleted = Math.random() > 0.5;
-      preReleaseChecksCompleted = preUnloadingChecksCompleted ? Math.random() > 0.3 : false; // Release checks only if unload checks are done (more likely)
+      occupiedSince = subHours(new Date(), Math.floor(Math.random() * 8) + 1).toISOString(); // Occupied 1 to 8 hours ago
+      preUnloadingChecksCompleted = Math.random() > 0.3; // More likely to be true or partially done
+      preReleaseChecksCompleted = preUnloadingChecksCompleted ? Math.random() > 0.6 : false; // Release checks only if unload checks are done (less likely to be fully done yet)
     } else if (status === "scheduled") {
-       // For scheduled, safety checks aren't typically completed yet
        preUnloadingChecksCompleted = false;
        preReleaseChecksCompleted = false;
     }
