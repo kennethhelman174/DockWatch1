@@ -1,3 +1,4 @@
+
 export type DockStatus = "available" | "occupied" | "maintenance" | "scheduled";
 export type DockType = "shipping" | "receiving";
 
