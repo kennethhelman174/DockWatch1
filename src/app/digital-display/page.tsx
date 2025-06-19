@@ -7,6 +7,7 @@ import { allMockDocks as importedAllMockDocks } from '@/constants/mockData';
 import type { Dock } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export default function DigitalDisplayPage() {
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
