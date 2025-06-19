@@ -13,9 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Megaphone, CloudSun, CloudRain, Cloud, Sun, Moon, Thermometer, Wind, type LucideIcon, AlertTriangle, InfoIcon, ShieldAlert, Lightbulb } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { SafetyTipDisplay } from '@/components/SafetyTipDisplay'; // Added
-import { getAiDailySafetyTip } from '@/app/actions'; // Added
-import { useToast } from '@/hooks/use-toast'; // Added
+import { SafetyTipDisplay } from '@/components/SafetyTipDisplay';
+import { getAiDailySafetyTip } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 const initialFacilityAlerts: FacilityAlert[] = [
   { id: 'fa1', title: 'Gate A Closure Scheduled', message: 'Gate A will be closed for maintenance on July 28th from 2 PM to 4 PM.', severity: 'warning', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
@@ -39,9 +39,9 @@ export default function DashboardPage() {
 
   const [facilityAlerts, setFacilityAlerts] = React.useState<FacilityAlert[]>(initialFacilityAlerts);
   const [weather, setWeather] = React.useState<WeatherAlertDisplay | null>(null);
-  const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null); // Added
-  const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true); // Added
-  const { toast } = useToast(); // Added
+  const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null);
+  const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true);
+  const { toast } = useToast();
 
 
   React.useEffect(() => {
