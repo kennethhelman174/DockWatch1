@@ -82,32 +82,24 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
 
   React.useEffect(() => {
     if (isOpen && dock) {
-      // Update edited status and notes when dock prop changes or modal opens
       setEditedStatus(dock.status);
       setEditedNotes(dock.notes || "");
 
-      // Reset checklist states and their completion status from dock data
-      const initialUnloadChecks: ChecklistState = preUnloadingChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {}); // Default all to false initially for UI interaction
+      const initialUnloadChecks: ChecklistState = preUnloadingChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {});
       const initialReleaseChecks: ChecklistState = preReleaseChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {});
       setPreUnloadingState(initialUnloadChecks);
       setPreReleaseState(initialReleaseChecks);
       setPreUnloadingCompleted(dock.preUnloadingChecksCompleted || false);
       setPreReleaseCompleted(dock.preReleaseChecksCompleted || false);
-
-      // Accordion state: Open safety checklists if dock is occupied and not editing
+      
       if (dock.status === 'occupied' && !isEditing) {
         setOpenAccordionItems(['safety-checklists']);
       } else {
-        // Otherwise, ensure 'safety-checklists' is not in the open items array
-        // This handles cases like 'scheduled' status or when editing begins.
         setOpenAccordionItems(prev => prev.filter(item => item !== 'safety-checklists'));
       }
     } else if (!isOpen) {
-      // Reset everything when modal closes
       setIsEditing(false);
       setOpenAccordionItems([]);
-      // setEditedStatus(undefined); // Optional: reset if values shouldn't persist
-      // setEditedNotes(undefined);
     }
   }, [isOpen, dock, isEditing]);
 
@@ -126,7 +118,6 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
 
   const handleEditDockClick = () => {
     setIsEditing(true);
-    // Ensure accordion is closed when editing starts, as it's hidden
     setOpenAccordionItems(prev => prev.filter(item => item !== 'safety-checklists'));
   };
   
@@ -141,7 +132,6 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
       notes: editedNotes || "", 
     });
     setIsEditing(false);
-    // If status changed to 'occupied', re-evaluate opening accordion in next effect cycle
     if (editedStatus === 'occupied') {
         setOpenAccordionItems(['safety-checklists']);
     }
@@ -154,7 +144,6 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
 
   const handleCancelEditClick = () => {
     setIsEditing(false);
-    // Restore original dock values to form and accordion state
     if (dock) {
       setEditedStatus(dock.status);
       setEditedNotes(dock.notes || "");
@@ -200,15 +189,8 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
       return;
     }
 
-    // Persist this change to the main dock data through onUpdateDock or a specific callback
-    // For now, we update local state and toast. A real app would update the backend.
-    // This prototype does not directly link checklist completion to the `dock` prop's booleans.
-    // That would require `onUpdateDock` to handle more fields or a new callback.
-
     if (listType === 'preUnloading') {
       setPreUnloadingCompleted(true);
-      // TODO: Consider calling onUpdateDock or similar to persist this
-      // e.g., onUpdateDock({ ...existingDockData, preUnloadingChecksCompleted: true })
       toast({
         title: "Pre-Unloading Checks Logged",
         description: `All pre-unloading safety checks for Dock ${dock.number} have been logged. (Client-side)`,
@@ -216,7 +198,6 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
       });
     } else {
       setPreReleaseCompleted(true);
-      // TODO: Persist this change
       toast({
         title: "Pre-Release Checks Logged",
         description: `All pre-release safety checks for Dock ${dock.number} have been logged. (Client-side)`,
@@ -230,7 +211,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
     checks: SafetyCheckItem[],
     state: ChecklistState,
     handler: (checkId: string, isChecked: boolean) => void,
-    isOverallCompleted: boolean, // This refers to preUnloadingCompleted or preReleaseCompleted state
+    isOverallCompleted: boolean,
     completeAction: () => void
   ) => (
     <div className="space-y-3">
@@ -240,9 +221,9 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
           <div key={check.id} className="flex items-center space-x-2">
             <Checkbox
               id={`${dock.id}-${check.id}`}
-              checked={state[check.id] || false} // Individual checkbox state
+              checked={state[check.id] || false}
               onCheckedChange={(checked) => handler(check.id, !!checked)}
-              disabled={isOverallCompleted || isEditing} // Disabled if overall list is marked complete OR editing main dock details
+              disabled={isOverallCompleted || isEditing}
               aria-labelledby={`${dock.id}-${check.id}-label`}
             />
             <Label htmlFor={`${dock.id}-${check.id}`} id={`${dock.id}-${check.id}-label`} className={cn("text-xs", (isOverallCompleted || isEditing) && "text-muted-foreground line-through")}>
@@ -276,7 +257,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-grow pr-2 -mr-2">
+        <ScrollArea className="flex-1 pr-2 -mr-2"> {/* Changed to flex-1 for better growth */}
           <div className="space-y-4 py-4">
             {isEditing ? (
               <div className="space-y-4">
@@ -329,7 +310,6 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
               </div>
             )}
             
-            {/* Safety Checklist Accordion: Only shown if dock is 'occupied' and not editing */}
             {dock.status === 'occupied' && !isEditing && (
               <Accordion type="multiple" value={openAccordionItems} onValueChange={setOpenAccordionItems} className="w-full">
                 <AccordionItem value="safety-checklists">
@@ -345,7 +325,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
                         preUnloadingChecks,
                         preUnloadingState,
                         (checkId, isChecked) => handleChecklistChange('preUnloading', checkId, isChecked),
-                        preUnloadingCompleted, // Use overall completion state here
+                        preUnloadingCompleted,
                         () => handleCompleteChecklist('preUnloading')
                       )}
                       <Separator />
@@ -354,7 +334,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
                         preReleaseChecks,
                         preReleaseState,
                         (checkId, isChecked) => handleChecklistChange('preRelease', checkId, isChecked),
-                        preReleaseCompleted, // Use overall completion state here
+                        preReleaseCompleted,
                         () => handleCompleteChecklist('preRelease')
                       )}
                     </div>
@@ -390,7 +370,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
           </div>
         </ScrollArea>
 
-        <DialogFooter className="mt-auto pt-4 border-t">
+        <DialogFooter className="mt-auto pt-4 border-t"> {/* Ensure footer is outside ScrollArea and at bottom */}
           {isEditing ? (
             <>
               <Button variant="outline" onClick={handleCancelEditClick}>Cancel</Button>
