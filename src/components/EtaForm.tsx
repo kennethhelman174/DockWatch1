@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CheckCircle, AlertTriangle, Clock, BarChart, Route } from 'lucide-react';
+import { Loader2, CheckCircle, AlertTriangle, Clock, BarChart, Route, Truck } from 'lucide-react';
 import type { EstimateArrivalTimeInput, EstimateArrivalTimeOutput } from '@/ai/flows/estimate-arrival-time';
 import { getAiEta } from '@/app/actions'; // Server action
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +56,7 @@ export function EtaForm() {
       toast({
         title: "ETA Calculated",
         description: "The estimated time of arrival has been successfully calculated.",
-        variant: "default", // Default is not green, need to style success toasts
+        variant: "success",
       });
     } else if (result.error) {
       setEtaResult(null);
