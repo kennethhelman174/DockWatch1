@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Home, CalendarDays, ClipboardPen, PackageSearch, Settings2, CircleHelp, LogOut, TruckIcon as DeliveryTruckIcon, Send, ArchiveRestore } from 'lucide-react';
+import { Home, CalendarDays, ClipboardPen, PackageSearch, Settings2, CircleHelp, LogOut, TruckIcon as DeliveryTruckIcon, Send, ArchiveRestore, BarChart3 } from 'lucide-react';
 // Note: TruckIcon is aliased as DeliveryTruckIcon to avoid conflict with a potential local Truck icon if any.
 
 const mainNavItems = [
@@ -21,6 +21,7 @@ const mainNavItems = [
   { href: '/digital-display', label: 'Digital Display', icon: PackageSearch },
   { href: '/shipping-loads', label: 'Shipping Loads', icon: Send },
   { href: '/receiving-loads', label: 'Receiving Loads', icon: ArchiveRestore },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 const secondaryNavItems = [

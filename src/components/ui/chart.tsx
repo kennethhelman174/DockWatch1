@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -188,11 +189,12 @@ const ChartTooltipContent = React.forwardRef<
           {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload.fill || item.color
+            const indicatorColor = color || item.color || (item.payload && item.payload.fill)
+
 
             return (
               <div
-                key={item.dataKey}
+                key={item.dataKey || index} // Use index as fallback key
                 className={cn(
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
                   indicator === "dot" && "items-center"
@@ -306,7 +308,7 @@ const ChartLegendContent = React.forwardRef<
                   }}
                 />
               )}
-              {itemConfig?.label}
+              {itemConfig?.label || item.value}
             </div>
           )
         })}
