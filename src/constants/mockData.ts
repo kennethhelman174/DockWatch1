@@ -1,4 +1,5 @@
 import type { Dock, DockStatus, NotificationMessage, Appointment } from '@/types';
+import { subHours } from 'date-fns';
 
 const dockStatuses: DockStatus[] = ["available", "occupied", "maintenance", "scheduled"];
 const carriers = ["Swift", "J.B. Hunt", "Knight-Swift", "Schneider", "Werner", "Old Dominion"];
@@ -28,6 +29,21 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
   const docks: Dock[] = [];
   for (let i = start; i <= end; i++) {
     const status = getRandomElement(dockStatuses);
+    let occupiedSince: string | undefined = undefined;
+    let preUnloadingChecksCompleted: boolean | undefined = undefined;
+    let preReleaseChecksCompleted: boolean | undefined = undefined;
+
+    if (status === "occupied") {
+      occupiedSince = subHours(new Date(), Math.floor(Math.random() * 8)).toISOString(); // Occupied within last 8 hours
+      preUnloadingChecksCompleted = Math.random() > 0.5;
+      preReleaseChecksCompleted = preUnloadingChecksCompleted ? Math.random() > 0.3 : false; // Release checks only if unload checks are done (more likely)
+    } else if (status === "scheduled") {
+       // For scheduled, safety checks aren't typically completed yet
+       preUnloadingChecksCompleted = false;
+       preReleaseChecksCompleted = false;
+    }
+
+
     const dock: Dock = {
       id: `dock-${i}`,
       number: i,
@@ -37,6 +53,9 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
       currentCarrier: status === "occupied" || status === "scheduled" ? getRandomElement(carriers) : undefined,
       scheduledAppointments: generateRandomAppointments(i),
       notes: Math.random() > 0.7 ? `Note for dock ${i}: Check for spills.` : undefined,
+      occupiedSince,
+      preUnloadingChecksCompleted,
+      preReleaseChecksCompleted,
     };
     docks.push(dock);
   }

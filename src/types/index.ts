@@ -10,6 +10,9 @@ export interface Dock {
   currentCarrier?: string;
   scheduledAppointments?: Appointment[];
   notes?: string;
+  occupiedSince?: string; // ISO timestamp when the dock became occupied
+  preUnloadingChecksCompleted?: boolean;
+  preReleaseChecksCompleted?: boolean;
 }
 
 export interface Appointment {
