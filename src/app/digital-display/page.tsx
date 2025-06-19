@@ -98,13 +98,13 @@ export default function DigitalDisplayPage() {
             
             <Separator className="my-6"/>
 
-            {renderMinimalDockList(availableShippingDocks, "Available Shipping Docks", "text-green-600")}
-            {renderMinimalDockList(availableReceivingDocks, "Available Receiving Docks", "text-green-600")}
+            {renderMinimalDockList(availableShippingDocks, "Available Shipping Docks", "text-green-600 dark:text-green-400")}
+            {renderMinimalDockList(availableReceivingDocks, "Available Receiving Docks", "text-green-600 dark:text-green-400")}
 
             <Separator className="my-6"/>
 
-            {renderMinimalDockList(maintenanceShippingDocks, "Shipping Docks Under Maintenance", "text-amber-600")}
-            {renderMinimalDockList(maintenanceReceivingDocks, "Receiving Docks Under Maintenance", "text-amber-600")}
+            {renderMinimalDockList(maintenanceShippingDocks, "Shipping Docks Under Maintenance", "text-amber-600 dark:text-amber-400")}
+            {renderMinimalDockList(maintenanceReceivingDocks, "Receiving Docks Under Maintenance", "text-amber-600 dark:text-amber-400")}
         </div>
       </ScrollArea>
        <footer className="p-2 text-center text-xs text-muted-foreground border-t bg-background">
