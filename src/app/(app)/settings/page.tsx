@@ -4,13 +4,16 @@
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { User, Palette, Bell, LogOut, KeyRound, Save, Link as LinkIcon } from 'lucide-react';
+import { User, Palette, Bell, LogOut, KeyRound, Save, Link as LinkIcon, Megaphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/components/ThemeProvider';
+import type { FacilityAlert } from '@/types';
 
 const mockUser = {
   name: 'Admin User',
@@ -26,11 +29,46 @@ export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = React.useState(true);
   const [inAppNotifications, setInAppNotifications] = React.useState(true);
 
+  // State for custom facility alert
+  const [customAlertTitle, setCustomAlertTitle] = React.useState('');
+  const [customAlertMessage, setCustomAlertMessage] = React.useState('');
+  const [customAlertSeverity, setCustomAlertSeverity] = React.useState<FacilityAlert['severity']>('info');
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedAlert = localStorage.getItem('customFacilityAlert');
+      if (storedAlert) {
+        try {
+          const parsed: FacilityAlert = JSON.parse(storedAlert);
+          setCustomAlertTitle(parsed.title || '');
+          setCustomAlertMessage(parsed.message || '');
+          setCustomAlertSeverity(parsed.severity || 'info');
+        } catch (e) {
+          console.error("Failed to parse custom facility alert from localStorage", e);
+        }
+      }
+    }
+  }, []);
+
+
   const handleSaveChanges = () => {
+    // Save custom facility alert to localStorage
+    if (typeof window !== 'undefined') {
+      const customAlertToSave: FacilityAlert = {
+        id: 'custom-fa1', // Fixed ID for the custom alert
+        title: customAlertTitle,
+        message: customAlertMessage,
+        severity: customAlertSeverity,
+        timestamp: new Date().toISOString(), // Always update timestamp on save
+      };
+      localStorage.setItem('customFacilityAlert', JSON.stringify(customAlertToSave));
+    }
+
     console.log('Settings saved:', {
       masterNotifications,
       emailNotifications,
       inAppNotifications,
+      customAlert: { title: customAlertTitle, message: customAlertMessage, severity: customAlertSeverity },
     });
     toast({
       title: 'Settings Saved',
@@ -142,6 +180,48 @@ export default function SettingsPage() {
 
       <Card className="shadow-md">
         <CardHeader>
+          <CardTitle className="flex items-center text-xl"><Megaphone className="mr-2 h-5 w-5 text-primary" /> Custom Facility Alert</CardTitle>
+          <CardDescription>Configure a custom alert message displayed on the dashboard.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-2">
+          <div className="space-y-2 p-4 border rounded-lg bg-card">
+            <Label htmlFor="custom-alert-title">Alert Title</Label>
+            <Input 
+              id="custom-alert-title" 
+              value={customAlertTitle} 
+              onChange={(e) => setCustomAlertTitle(e.target.value)}
+              placeholder="Enter alert title" 
+            />
+          </div>
+          <div className="space-y-2 p-4 border rounded-lg bg-card">
+            <Label htmlFor="custom-alert-message">Alert Message</Label>
+            <Textarea 
+              id="custom-alert-message" 
+              value={customAlertMessage} 
+              onChange={(e) => setCustomAlertMessage(e.target.value)}
+              placeholder="Enter alert message details"
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2 p-4 border rounded-lg bg-card">
+            <Label htmlFor="custom-alert-severity">Alert Severity</Label>
+            <Select value={customAlertSeverity} onValueChange={(value) => setCustomAlertSeverity(value as FacilityAlert['severity'])}>
+              <SelectTrigger id="custom-alert-severity">
+                <SelectValue placeholder="Select severity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="danger">Danger</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+
+      <Card className="shadow-md">
+        <CardHeader>
           <CardTitle className="flex items-center text-xl"><LinkIcon className="mr-2 h-5 w-5 text-primary" /> Integrations</CardTitle>
           <CardDescription>Connect DockWatch with other workplace software.</CardDescription>
         </CardHeader>
@@ -212,3 +292,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

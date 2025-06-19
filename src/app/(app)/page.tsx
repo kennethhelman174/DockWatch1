@@ -17,7 +17,7 @@ import { SafetyTipDisplay } from '@/components/SafetyTipDisplay';
 import { getAiDailySafetyTip } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
-const initialFacilityAlerts: FacilityAlert[] = [
+const defaultFacilityAlerts: FacilityAlert[] = [
   { id: 'fa1', title: 'Gate A Closure Scheduled', message: 'Gate A will be closed for maintenance on July 28th from 2 PM to 4 PM.', severity: 'warning', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
   { id: 'fa2', title: 'Safety Drill Reminder', message: 'Quarterly safety drill scheduled for next Wednesday at 10 AM. All personnel to participate.', severity: 'info', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
 ];
@@ -37,7 +37,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
 
-  const [facilityAlerts, setFacilityAlerts] = React.useState<FacilityAlert[]>(initialFacilityAlerts);
+  const [facilityAlerts, setFacilityAlerts] = React.useState<FacilityAlert[]>(defaultFacilityAlerts);
   const [weather, setWeather] = React.useState<WeatherAlertDisplay | null>(null);
   const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null);
   const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true);
@@ -46,6 +46,32 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     setClientDocks(importedAllMockDocks);
+
+    // Load custom facility alert or use defaults
+    if (typeof window !== 'undefined') {
+      const storedCustomAlert = localStorage.getItem('customFacilityAlert');
+      let alertsToDisplay = [...defaultFacilityAlerts];
+      if (storedCustomAlert) {
+        try {
+          const customAlert: FacilityAlert = JSON.parse(storedCustomAlert);
+          // Prepend custom alert and ensure it's prioritized or replaces a default one
+          // For simplicity, let's make it the first alert, potentially replacing an existing one if ID conflicts.
+          // A more robust way would be to filter out any existing alert with id 'custom-fa1' then prepend.
+          const existingCustomAlertIndex = alertsToDisplay.findIndex(alert => alert.id === 'custom-fa1');
+          if (existingCustomAlertIndex !== -1) {
+            alertsToDisplay[existingCustomAlertIndex] = customAlert;
+          } else {
+            alertsToDisplay.unshift(customAlert); // Add to the beginning
+          }
+        } catch (e) {
+          console.error("Failed to parse custom facility alert from localStorage for dashboard", e);
+        }
+      }
+      setFacilityAlerts(alertsToDisplay.slice(0,2)); // Keep max 2 alerts for display
+    } else {
+      setFacilityAlerts(defaultFacilityAlerts.slice(0,2));
+    }
+
 
     // Initial weather setup
     setWeather({
@@ -93,7 +119,7 @@ export default function DashboardPage() {
           description: "Could not load the daily safety tip.",
           variant: "destructive",
         });
-        setDailySafetyTip(null); // Explicitly set to null on error
+        setDailySafetyTip(null); 
       }
       setIsSafetyTipLoading(false);
     };
@@ -162,7 +188,7 @@ export default function DashboardPage() {
   const getSeverityIcon = (severity: FacilityAlert['severity']) => {
     switch (severity) {
       case 'danger': return <ShieldAlert className="h-5 w-5 text-destructive" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5 text-warning" />;
+      case 'warning': return <AlertTriangle className="h-5 w-5 text-orange-500" />; // Changed text-warning to a specific color
       case 'info': default: return <InfoIcon className="h-5 w-5 text-blue-500" />;
     }
   };
@@ -184,7 +210,7 @@ export default function DashboardPage() {
                 {facilityAlerts.map(alert => (
                   <Alert key={alert.id} variant={alert.severity === 'danger' ? 'destructive' : alert.severity === 'warning' ? 'default' : 'default'} 
                          className={cn(
-                            alert.severity === 'warning' && 'bg-warning/10 border-warning/50 text-warning-foreground',
+                            alert.severity === 'warning' && 'bg-orange-500/10 border-orange-500/50 text-orange-700 dark:text-orange-300', // Changed warning classes
                             alert.severity === 'info' && 'bg-blue-500/10 border-blue-500/50 text-foreground'
                          )}>
                     <div className="flex items-start">
@@ -192,12 +218,12 @@ export default function DashboardPage() {
                       <div className="ml-3 flex-1">
                         <AlertTitle className={cn(
                            "text-sm font-semibold",
-                           alert.severity === 'warning' && 'text-warning-foreground',
+                           alert.severity === 'warning' && 'text-orange-700 dark:text-orange-300', // Changed warning classes
                            alert.severity === 'info' && 'text-blue-700 dark:text-blue-400'
                         )}>{alert.title}</AlertTitle>
                         <AlertDescription className={cn(
                            "text-xs",
-                            alert.severity === 'warning' ? 'text-warning-foreground/90' : 'text-muted-foreground'
+                            alert.severity === 'warning' ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground' // Changed warning classes
                         )}>
                           {alert.message}
                           <span className="block text-xs opacity-80 mt-1">
@@ -278,3 +304,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
