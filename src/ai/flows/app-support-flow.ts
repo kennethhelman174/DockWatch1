@@ -11,12 +11,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { 
-  getWeatherForecast, 
-  GetWeatherForecastInputSchema, // Renamed for clarity if it was just 'input' before
-  WeatherForecastOutputSchema as GetWeatherForecastOutputSchema // Renamed for clarity
-} from './get-weather-forecast-flow'; 
-import type { GetWeatherForecastInput, WeatherForecastOutput as GetWeatherForecastOutput } from './get-weather-forecast-flow';
+import { getWeatherForecast } from './get-weather-forecast-flow';
+import {
+  GetWeatherForecastInputSchema,
+  WeatherForecastOutputSchema as GetWeatherForecastOutputSchema, // Keep alias for consistency if used extensively
+  type GetWeatherForecastInput,
+  type WeatherForecastOutput as GetWeatherForecastOutput // Keep alias
+} from '@/ai/schemas/weather-schemas';
 
 
 const AppSupportInputSchema = z.object({
