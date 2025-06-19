@@ -24,9 +24,9 @@ export default function DashboardPage() {
     setClientDocks(importedAllMockDocks);
   }, []);
 
-  const handleFilterChange = (newFilters: DockFilters) => {
+  const handleFilterChange = React.useCallback((newFilters: DockFilters) => {
     setFilters(newFilters);
-  };
+  }, [setFilters]); // setFilters from useState is stable, so this could also be []
 
   const handleDockClick = (dock: Dock) => {
     setSelectedDock(dock);
