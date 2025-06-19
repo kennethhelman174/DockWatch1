@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Edit3, Trash2, UserPlus, Cog, Bell, Palette, Users, ShieldAlert, Puzzle, Save, Settings as SettingsIcon, Shield, KeyRound, PlusCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area'; // Added for scrollability
 
 const userRoleSchema = z.enum(['admin', 'shipping_coordinator', 'dock_worker', 'view_only']);
 const allUserRoles: UserRole[] = ['admin', 'shipping_coordinator', 'dock_worker', 'view_only'];
@@ -320,36 +321,38 @@ export default function SettingsPage() {
                   <DialogTrigger asChild>
                     <Button size="sm"><UserPlus className="mr-2 h-4 w-4" /> Add User</Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-md flex flex-col max-h-[85vh]">
                     <DialogHeader>
                       <DialogTitle>Create New User</DialogTitle>
                       <DialogDescription>Fill in the details to add a new user to the system.</DialogDescription>
                     </DialogHeader>
-                    <Form {...addUserForm}>
-                      <form onSubmit={addUserForm.handleSubmit(onAddUserSubmit)} className="space-y-4 py-4">
-                        <FormField control={addUserForm.control} name="name" render={({ field }) => (
-                          <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={addUserForm.control} name="email" render={({ field }) => (
-                          <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="e.g., jane.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={addUserForm.control} name="role" render={({ field }) => (
-                          <FormItem><FormLabel>Role</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {managedRoles.map(role => (
-                                  <SelectItem key={role} value={role}>{role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select><FormMessage /></FormItem>
-                        )} />
-                        <DialogFooter>
-                          <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                          <Button type="submit">Create User</Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
+                    <ScrollArea className="flex-1 pr-2 -mr-2">
+                      <Form {...addUserForm}>
+                        <form onSubmit={addUserForm.handleSubmit(onAddUserSubmit)} className="space-y-4 py-4">
+                          <FormField control={addUserForm.control} name="name" render={({ field }) => (
+                            <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={addUserForm.control} name="email" render={({ field }) => (
+                            <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="e.g., jane.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={addUserForm.control} name="role" render={({ field }) => (
+                            <FormItem><FormLabel>Role</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  {managedRoles.map(role => (
+                                    <SelectItem key={role} value={role}>{role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select><FormMessage /></FormItem>
+                          )} />
+                           <DialogFooter className="pt-4">
+                            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                            <Button type="submit">Create User</Button>
+                          </DialogFooter>
+                        </form>
+                      </Form>
+                    </ScrollArea>
                   </DialogContent>
                 </Dialog>
               )}
@@ -386,36 +389,38 @@ export default function SettingsPage() {
         {/* Edit User Dialog */}
         {editingUser && (
             <Dialog open={isEditUserDialogOpen} onOpenChange={(isOpen) => { setIsEditUserDialogOpen(isOpen); if (!isOpen) setEditingUser(null); }}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md flex flex-col max-h-[85vh]">
                 <DialogHeader>
                 <DialogTitle>Edit User: {editingUser.name}</DialogTitle>
                 <DialogDescription>Update the user's details below.</DialogDescription>
                 </DialogHeader>
-                <Form {...editUserForm}>
-                <form onSubmit={editUserForm.handleSubmit(onEditUserSubmit)} className="space-y-4 py-4">
-                    <FormField control={editUserForm.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={editUserForm.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={editUserForm.control} name="role" render={({ field }) => (
-                        <FormItem><FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>
-                            {managedRoles.map(role => (
-                                <SelectItem key={role} value={role}>{role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select><FormMessage /></FormItem>
-                    )} />
-                    <DialogFooter>
-                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    <Button type="submit"><Save className="mr-2 h-4 w-4" />Save Changes</Button>
-                    </DialogFooter>
-                </form>
-                </Form>
+                <ScrollArea className="flex-1 pr-2 -mr-2">
+                  <Form {...editUserForm}>
+                  <form onSubmit={editUserForm.handleSubmit(onEditUserSubmit)} className="space-y-4 py-4">
+                      <FormField control={editUserForm.control} name="name" render={({ field }) => (
+                          <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={editUserForm.control} name="email" render={({ field }) => (
+                          <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={editUserForm.control} name="role" render={({ field }) => (
+                          <FormItem><FormLabel>Role</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                              <SelectContent>
+                              {managedRoles.map(role => (
+                                  <SelectItem key={role} value={role}>{role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select><FormMessage /></FormItem>
+                      )} />
+                      <DialogFooter className="pt-4">
+                        <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                        <Button type="submit"><Save className="mr-2 h-4 w-4" />Save Changes</Button>
+                      </DialogFooter>
+                  </form>
+                  </Form>
+                </ScrollArea>
             </DialogContent>
             </Dialog>
         )}
@@ -536,6 +541,4 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-
     

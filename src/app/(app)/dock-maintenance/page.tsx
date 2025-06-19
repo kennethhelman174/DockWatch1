@@ -21,6 +21,7 @@ import { format, isPast, differenceInDays } from 'date-fns';
 import type { MaintenanceRecord, MaintenanceType, Dock } from '@/types';
 import { allMockDocks as importedAllMockDocks, mockMaintenanceRecords as importedMockMaintenanceRecords } from '@/constants/mockData';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area'; // Added for scrollability
 
 const maintenanceRecordFormSchema = z.object({
   dockNumber: z.coerce.number({ required_error: "Dock number is required."}).int().positive(),
@@ -161,143 +162,145 @@ export default function DockMaintenancePage() {
                 <PlusCircle className="mr-2 h-4 w-4" /> Log New Maintenance
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-lg flex flex-col max-h-[85vh]">
               <DialogHeader>
                 <DialogTitle>Log New Maintenance Record</DialogTitle>
                 <DialogDescription>
                   Fill in the details for the maintenance activity.
                 </DialogDescription>
               </DialogHeader>
-              <Form {...maintenanceForm}>
-                <form onSubmit={maintenanceForm.handleSubmit(onMaintenanceSubmit)} className="space-y-4 py-4">
-                  <FormField
-                    control={maintenanceForm.control}
-                    name="dockNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dock Number</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a dock..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {clientDocks.map(dock => (
-                              <SelectItem key={dock.id} value={dock.number.toString()}>
-                                Dock {dock.number} ({dock.type})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={maintenanceForm.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Maintenance Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="preventive">Preventive</SelectItem>
-                            <SelectItem value="corrective">Corrective</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={maintenanceForm.control}
-                    name="datePerformed"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date Performed</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
+              <ScrollArea className="flex-1 pr-2 -mr-2">
+                <Form {...maintenanceForm}>
+                  <form onSubmit={maintenanceForm.handleSubmit(onMaintenanceSubmit)} className="space-y-4 py-4">
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="dockNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dock Number</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
                             <FormControl>
-                              <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a dock..." />
+                              </SelectTrigger>
                             </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={maintenanceForm.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description of Work</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Describe the work performed..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={maintenanceForm.control}
-                    name="performedBy"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Performed By (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Facility Team, John Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={maintenanceForm.control}
-                    name="nextPmDueDateUpdate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>New Next PM Due Date (Optional)</FormLabel>
-                         <Popover>
-                          <PopoverTrigger asChild>
+                            <SelectContent>
+                              {clientDocks.map(dock => (
+                                <SelectItem key={dock.id} value={dock.number.toString()}>
+                                  Dock {dock.number} ({dock.type})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maintenance Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                {field.value ? format(field.value, "PPP") : <span>Pick a date if PM completed</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type..." />
+                              </SelectTrigger>
                             </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter>
-                    <DialogClose asChild>
-                       <Button type="button" variant="outline" onClick={() => { maintenanceForm.reset(); setIsDialogOpen(false); }}>Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Log Record
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
+                            <SelectContent>
+                              <SelectItem value="preventive">Preventive</SelectItem>
+                              <SelectItem value="corrective">Corrective</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="datePerformed"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date Performed</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                  {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description of Work</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Describe the work performed..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="performedBy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Performed By (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Facility Team, John Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="nextPmDueDateUpdate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>New Next PM Due Date (Optional)</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                  {field.value ? format(field.value, "PPP") : <span>Pick a date if PM completed</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter className="pt-4">
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline" onClick={() => { maintenanceForm.reset(); setIsDialogOpen(false); }}>Cancel</Button>
+                      </DialogClose>
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Log Record
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </ScrollArea>
             </DialogContent>
           </Dialog>
         </CardHeader>
