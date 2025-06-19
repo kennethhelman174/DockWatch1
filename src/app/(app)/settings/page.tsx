@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/components/ThemeProvider';
-import { allMockAppUsers as importedAllMockAppUsers, currentMockUser as importedCurrentMockUser } from '@/constants/mockData';
+import { mockAppUsers as importedAllMockAppUsers, currentMockUser as importedCurrentMockUser } from '@/constants/mockData';
 import type { AppUser, FacilityAlert, UserRole } from '@/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -403,6 +403,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-
-    
