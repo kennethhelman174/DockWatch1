@@ -1,7 +1,8 @@
+
 "use client";
 
 import * as React from 'react';
-import { Bell, CircleAlert, Info, CheckCircle } from 'lucide-react';
+import { Bell, CircleAlert, Info, CheckCircle, MailCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,21 +16,33 @@ interface NotificationBellProps {
   notifications: NotificationMessage[];
 }
 
-export function NotificationBell({ notifications }: NotificationBellProps) {
+export function NotificationBell({ notifications: initialNotifications }: NotificationBellProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const [displayNotifications, setDisplayNotifications] = React.useState<NotificationMessage[]>(initialNotifications);
+
+  React.useEffect(() => {
+    setDisplayNotifications(initialNotifications);
+  }, [initialNotifications]);
+
+  const unreadCount = displayNotifications.filter(n => !n.read).length;
 
   const getPriorityIcon = (priority: NotificationMessage['priority']) => {
     switch (priority) {
       case 'high':
         return <CircleAlert className="h-4 w-4 text-destructive" />;
       case 'medium':
-        return <Info className="h-4 w-4 text-blue-500" />; // Consider adding 'info' to theme colors
+        return <Info className="h-4 w-4 text-blue-500" />; 
       case 'low':
         return <Bell className="h-4 w-4 text-muted-foreground" />;
       default:
         return <Info className="h-4 w-4 text-muted-foreground" />;
     }
+  };
+
+  const handleMarkAllRead = () => {
+    setDisplayNotifications(prevNotifications =>
+      prevNotifications.map(n => ({ ...n, read: true }))
+    );
   };
 
   return (
@@ -54,11 +67,11 @@ export function NotificationBell({ notifications }: NotificationBellProps) {
         </div>
         <Separator />
         <ScrollArea className="h-[300px]">
-          {notifications.length === 0 ? (
+          {displayNotifications.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No new notifications.</p>
           ) : (
             <div className="divide-y divide-border">
-              {notifications.map((notification) => (
+              {displayNotifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={cn(
@@ -85,12 +98,16 @@ export function NotificationBell({ notifications }: NotificationBellProps) {
             </div>
           )}
         </ScrollArea>
-         {notifications.length > 0 && (
+         {displayNotifications.length > 0 && (
           <>
             <Separator />
-            <div className="p-2 text-center">
-              <Button variant="link" size="sm" className="text-xs">
-                View all notifications
+            <div className="p-2 flex justify-between items-center">
+              <Button variant="link" size="sm" className="text-xs text-muted-foreground">
+                View all
+              </Button>
+              <Button variant="outline" size="sm" className="text-xs" onClick={handleMarkAllRead} disabled={unreadCount === 0}>
+                <MailCheck className="mr-1.5 h-3.5 w-3.5" />
+                Mark all as read
               </Button>
             </div>
           </>
