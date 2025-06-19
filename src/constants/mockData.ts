@@ -64,7 +64,21 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
 
 export const mockShippingDocks: Dock[] = generateDocks(100, 129, "shipping");
 export const mockReceivingDocks: Dock[] = generateDocks(200, 223, "receiving");
-export const allMockDocks: Dock[] = [...mockShippingDocks, ...mockReceivingDocks];
+
+let allGeneratedMockDocks: Dock[] = [...mockShippingDocks, ...mockReceivingDocks];
+
+// Set all docks to available and clear truck information
+export const allMockDocks: Dock[] = allGeneratedMockDocks.map(dock => ({
+  ...dock,
+  status: "available",
+  currentTrailer: undefined,
+  currentCarrier: undefined,
+  occupiedSince: undefined,
+  preUnloadingChecksCompleted: undefined,
+  preReleaseChecksCompleted: undefined,
+  // Keep existing notes and scheduledAppointments
+}));
+
 
 export const mockNotifications: NotificationMessage[] = [
   {
