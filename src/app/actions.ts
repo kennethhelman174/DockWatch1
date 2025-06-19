@@ -3,8 +3,9 @@
 
 import { estimateArrivalTime as estimateArrivalTimeFlow, type EstimateArrivalTimeInput, type EstimateArrivalTimeOutput } from '@/ai/flows/estimate-arrival-time';
 import { getWeatherForecast as getWeatherForecastFlow, type GetWeatherForecastInput } from '@/ai/flows/get-weather-forecast-flow';
-import { getAppSupport as getAppSupportFlow, type AppSupportInput, type AppSupportOutput } from '@/ai/flows/app-support-flow'; // Added
-import type { WeatherForecastOutput } from '@/types';
+import { getAppSupport as getAppSupportFlow, type AppSupportInput, type AppSupportOutput } from '@/ai/flows/app-support-flow';
+import { getDailySafetyTip as getDailySafetyTipFlow, type DailySafetyTipOutput } from '@/ai/flows/get-daily-safety-tip-flow.ts'; // Added
+import type { WeatherForecastOutput as WeatherForecastOutputType } from '@/types'; // Renamed to avoid conflict if any
 import { z } from 'zod';
 
 const EstimateArrivalTimeInputSchema = z.object({
@@ -19,7 +20,6 @@ export async function getAiEta(
   input: EstimateArrivalTimeInput
 ): Promise<{ data?: EstimateArrivalTimeOutput; error?: string }> {
   try {
-    // Validate input on the server-side as well
     const validatedInput = EstimateArrivalTimeInputSchema.parse(input);
     const result = await estimateArrivalTimeFlow(validatedInput);
     return { data: result };
@@ -39,10 +39,11 @@ const GetWeatherForecastInputSchemaServer = z.object({
 
 export async function getAiWeatherForecast(
   input: GetWeatherForecastInput
-): Promise<{ data?: WeatherForecastOutput; error?: string }> {
+): Promise<{ data?: WeatherForecastOutputType; error?: string }> {
   try {
     const validatedInput = GetWeatherForecastInputSchemaServer.parse(input);
-    const result = await getWeatherForecastFlow(validatedInput);
+    // Ensure the return type of getWeatherForecastFlow matches WeatherForecastOutputType
+    const result: WeatherForecastOutputType = await getWeatherForecastFlow(validatedInput);
     return { data: result };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -54,7 +55,6 @@ export async function getAiWeatherForecast(
   }
 }
 
-// New Server Action for App Support
 const AppSupportInputSchemaServer = z.object({
   userQuestion: z.string().min(5, "Question must be at least 5 characters long."),
 });
@@ -72,6 +72,18 @@ export async function getAppSupportResponse(
     }
     console.error("Error calling App Support AI flow:", e);
     const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while getting support.";
+    return { error: errorMessage };
+  }
+}
+
+// New Server Action for Daily Safety Tip
+export async function getAiDailySafetyTip(): Promise<{ data?: DailySafetyTipOutput; error?: string }> {
+  try {
+    const result = await getDailySafetyTipFlow();
+    return { data: result };
+  } catch (e) {
+    console.error("Error calling Daily Safety Tip AI flow:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while fetching the safety tip.";
     return { error: errorMessage };
   }
 }

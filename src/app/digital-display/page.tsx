@@ -8,29 +8,52 @@ import type { Dock } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { SafetyTipDisplay } from '@/components/SafetyTipDisplay'; // Added
+import { getAiDailySafetyTip } from '@/app/actions'; // Added
+import { useToast } from '@/hooks/use-toast'; // Added
 
 export default function DigitalDisplayPage() {
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
-  const [actualCurrentTime, setActualCurrentTime] = React.useState(new Date()); // For calculations
-  const [displayTime, setDisplayTime] = React.useState<string | null>(null); // For display in header
+  const [actualCurrentTime, setActualCurrentTime] = React.useState(new Date()); 
+  const [displayTime, setDisplayTime] = React.useState<string | null>(null);
+  const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null); // Added
+  const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true); // Added
+  const { toast } = useToast(); // Added
 
   React.useEffect(() => {
-    // Initialize docks from mock data on client side
     setClientDocks(importedAllMockDocks);
 
-    // Set initial display time and actual time on client mount
     const now = new Date();
     setActualCurrentTime(now);
-    setDisplayTime(now.toLocaleTimeString());
+    setDisplayTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'}));
 
     const timerId = setInterval(() => {
       const newNow = new Date();
-      setActualCurrentTime(newNow); // Update Date object for calculations
-      setDisplayTime(newNow.toLocaleTimeString()); // Update string for display
-    }, 30000); // Update current time every 30 seconds
+      setActualCurrentTime(newNow); 
+      setDisplayTime(newNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})); 
+    }, 30000); 
+
+    // Fetch daily safety tip
+    const fetchSafetyTip = async () => {
+      setIsSafetyTipLoading(true);
+      const result = await getAiDailySafetyTip();
+      if (result.data?.safetyTip) {
+        setDailySafetyTip(result.data.safetyTip);
+      } else if (result.error) {
+        console.error("Failed to load safety tip for digital display:", result.error);
+        toast({ // Use toast on digital display as well, though it might be less visible
+          title: "Safety Tip Error",
+          description: "Could not load the daily safety tip.",
+          variant: "destructive",
+        });
+         setDailySafetyTip(null);
+      }
+      setIsSafetyTipLoading(false);
+    };
+    fetchSafetyTip();
 
     return () => clearInterval(timerId);
-  }, []);
+  }, [toast]);
 
   const activeDocks = React.useMemo(() => {
     return clientDocks.filter(dock => dock.status === 'occupied' || dock.status === 'scheduled');
@@ -92,10 +115,23 @@ export default function DigitalDisplayPage() {
 
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-900 text-foreground">
       <header className="p-4 bg-background shadow-md">
-        <h1 className="text-4xl font-extrabold text-primary tracking-tight">DockWatch - Live Status</h1>
-         <p className="text-muted-foreground">Last updated: {displayTime !== null ? displayTime : 'Loading...'}</p>
+        <div className="flex justify-between items-start">
+            <div>
+                <h1 className="text-4xl font-extrabold text-primary tracking-tight">DockWatch - Live Status</h1>
+                <p className="text-muted-foreground">Last updated: {displayTime !== null ? displayTime : 'Loading...'}</p>
+            </div>
+            <div className="w-1/3 max-w-md ml-4">
+                <SafetyTipDisplay 
+                    tip={dailySafetyTip} 
+                    isLoading={isSafetyTipLoading}
+                    className="bg-transparent border-0 shadow-none"
+                    titleClassName="text-base text-primary"
+                    contentClassName="text-xs !pt-0 !pb-0"
+                />
+            </div>
+        </div>
       </header>
       <ScrollArea className="flex-grow p-2">
         <div className="space-y-6">

@@ -10,10 +10,12 @@ import type { Dock, FacilityAlert, WeatherAlertDisplay } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Megaphone, CloudSun, CloudRain, Cloud, Sun, Moon, Thermometer, Wind, type LucideIcon, AlertTriangle, InfoIcon, ShieldAlert } from 'lucide-react';
+import { Megaphone, CloudSun, CloudRain, Cloud, Sun, Moon, Thermometer, Wind, type LucideIcon, AlertTriangle, InfoIcon, ShieldAlert, Lightbulb } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
+import { SafetyTipDisplay } from '@/components/SafetyTipDisplay'; // Added
+import { getAiDailySafetyTip } from '@/app/actions'; // Added
+import { useToast } from '@/hooks/use-toast'; // Added
 
 const initialFacilityAlerts: FacilityAlert[] = [
   { id: 'fa1', title: 'Gate A Closure Scheduled', message: 'Gate A will be closed for maintenance on July 28th from 2 PM to 4 PM.', severity: 'warning', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
@@ -37,6 +39,9 @@ export default function DashboardPage() {
 
   const [facilityAlerts, setFacilityAlerts] = React.useState<FacilityAlert[]>(initialFacilityAlerts);
   const [weather, setWeather] = React.useState<WeatherAlertDisplay | null>(null);
+  const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null); // Added
+  const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true); // Added
+  const { toast } = useToast(); // Added
 
 
   React.useEffect(() => {
@@ -75,8 +80,28 @@ export default function DashboardPage() {
       });
     }, 300000); // Update every 5 minutes (300000 ms)
 
+    // Fetch daily safety tip
+    const fetchSafetyTip = async () => {
+      setIsSafetyTipLoading(true);
+      const result = await getAiDailySafetyTip();
+      if (result.data?.safetyTip) {
+        setDailySafetyTip(result.data.safetyTip);
+      } else if (result.error) {
+        console.error("Failed to load safety tip:", result.error);
+        toast({
+          title: "Safety Tip Error",
+          description: "Could not load the daily safety tip.",
+          variant: "destructive",
+        });
+        setDailySafetyTip(null); // Explicitly set to null on error
+      }
+      setIsSafetyTipLoading(false);
+    };
+    fetchSafetyTip();
+
+
     return () => clearInterval(weatherUpdateInterval);
-  }, []);
+  }, [toast]);
 
   const handleFilterChange = React.useCallback((newFilters: DockFilters) => {
     setFilters(newFilters);
@@ -147,9 +172,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Alerts Section */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <Card className="shadow-md">
+      {/* Alerts and Safety Tip Section */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="shadow-md lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center"><Megaphone className="mr-2 h-5 w-5 text-primary" /> Facility Alerts</CardTitle>
           </CardHeader>
@@ -190,7 +215,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-md lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center">
                 <WeatherIcon className="mr-2 h-5 w-5 text-primary" /> Current Weather
@@ -214,6 +239,12 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        
+        <SafetyTipDisplay 
+          tip={dailySafetyTip} 
+          isLoading={isSafetyTipLoading} 
+          className="lg:col-span-1"
+        />
       </div>
       
       <DockFilterControls onFilterChange={handleFilterChange} />
