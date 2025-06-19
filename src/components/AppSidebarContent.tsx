@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Home, CalendarDays, ClipboardPen, PackageSearch, Settings2, CircleHelp, LogOut, TruckIcon as DeliveryTruckIcon } from 'lucide-react';
+import { Home, CalendarDays, ClipboardPen, PackageSearch, Settings2, CircleHelp, LogOut, TruckIcon as DeliveryTruckIcon, Send, ArchiveRestore } from 'lucide-react';
 // Note: TruckIcon is aliased as DeliveryTruckIcon to avoid conflict with a potential local Truck icon if any.
 
 const mainNavItems = [
@@ -19,6 +19,8 @@ const mainNavItems = [
   { href: '/eta-calculator', label: 'ETA Calculator', icon: CalendarDays },
   { href: '/driver-kiosk', label: 'Driver Kiosk', icon: ClipboardPen },
   { href: '/digital-display', label: 'Digital Display', icon: PackageSearch },
+  { href: '/shipping-loads', label: 'Shipping Loads', icon: Send },
+  { href: '/receiving-loads', label: 'Receiving Loads', icon: ArchiveRestore },
 ];
 
 const secondaryNavItems = [
@@ -48,7 +50,7 @@ export function AppSidebarContent() {
                 <SidebarMenuButton
                   className="w-full justify-start text-base"
                   isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
-                  tooltip={{content: item.label, side: 'right', align: 'center', className: "ml-2" }}
+                  tooltip={{content: item.label, side: 'right', align: 'center' }}
                 >
                   <item.icon className="h-5 w-5" />
                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
@@ -67,7 +69,7 @@ export function AppSidebarContent() {
                 <SidebarMenuButton
                   className="w-full justify-start text-base"
                   isActive={pathname === item.href}
-                  tooltip={{content: item.label, side: 'right', align: 'center',  className: "ml-2" }}
+                  tooltip={{content: item.label, side: 'right', align: 'center' }}
                 >
                   <item.icon className="h-5 w-5" />
                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
@@ -79,7 +81,7 @@ export function AppSidebarContent() {
              <SidebarMenuButton
                 className="w-full justify-start text-base"
                 onClick={() => alert('Logout action placeholder')} // Placeholder for actual logout logic
-                tooltip={{content: "Logout", side: 'right', align: 'center',  className: "ml-2" }}
+                tooltip={{content: "Logout", side: 'right', align: 'center' }}
               >
                 <LogOut className="h-5 w-5" />
                 <span className="group-data-[collapsible=icon]:hidden">Logout</span>
