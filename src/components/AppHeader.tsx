@@ -1,11 +1,12 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Package2, Bell, Home, Truck, BarChart3, Settings } from 'lucide-react';
+import { Menu, Truck, Bell, Home, BarChart3, Settings } from 'lucide-react'; // Changed Package2 to Truck
 import { NotificationBell } from './NotificationBell';
-import { mockNotifications } from '@/constants/mockData'; // Assuming notifications are fetched or passed
+import { mockNotifications } from '@/constants/mockData';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +26,7 @@ export function AppHeader() {
       <div className="container mx-auto flex h-full items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-            <Package2 className="h-6 w-6 text-primary" />
+            <Truck className="h-6 w-6 text-primary" /> {/* Changed Package2 to Truck */}
             <span className="font-headline text-xl text-primary">DockWatch</span>
           </Link>
           <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
@@ -57,7 +58,7 @@ export function AppHeader() {
             <SheetContent side="left">
               <nav className="grid gap-6 text-lg font-medium">
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold mb-4">
-                  <Package2 className="h-6 w-6 text-primary" />
+                  <Truck className="h-6 w-6 text-primary" /> {/* Changed Package2 to Truck */}
                   <span className="font-headline text-xl text-primary">DockWatch</span>
                 </Link>
                 {navItems.map((item) => (
