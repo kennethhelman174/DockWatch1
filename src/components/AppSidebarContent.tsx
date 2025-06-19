@@ -44,7 +44,7 @@ export function AppSidebarContent() {
         <SidebarMenu>
           {mainNavItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   className="w-full justify-start text-base"
                   isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
@@ -63,7 +63,7 @@ export function AppSidebarContent() {
         <SidebarMenu>
           {secondaryNavItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   className="w-full justify-start text-base"
                   isActive={pathname === item.href}
