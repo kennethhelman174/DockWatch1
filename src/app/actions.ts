@@ -1,6 +1,9 @@
+
 "use server";
 
 import { estimateArrivalTime as estimateArrivalTimeFlow, type EstimateArrivalTimeInput, type EstimateArrivalTimeOutput } from '@/ai/flows/estimate-arrival-time';
+import { getWeatherForecast as getWeatherForecastFlow, type GetWeatherForecastInput } from '@/ai/flows/get-weather-forecast-flow';
+import type { WeatherForecastOutput } from '@/types';
 import { z } from 'zod';
 
 const EstimateArrivalTimeInputSchema = z.object({
@@ -25,6 +28,27 @@ export async function getAiEta(
     }
     console.error("Error calling AI ETA flow:", e);
     const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while estimating ETA.";
+    return { error: errorMessage };
+  }
+}
+
+const GetWeatherForecastInputSchemaServer = z.object({
+  location: z.string().min(1, "Location is required."),
+});
+
+export async function getAiWeatherForecast(
+  input: GetWeatherForecastInput
+): Promise<{ data?: WeatherForecastOutput; error?: string }> {
+  try {
+    const validatedInput = GetWeatherForecastInputSchemaServer.parse(input);
+    const result = await getWeatherForecastFlow(validatedInput);
+    return { data: result };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: `Validation failed: ${e.errors.map(err => `${err.path.join('.')} - ${err.message}`).join(', ')}` };
+    }
+    console.error("Error calling AI Weather Forecast flow:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while fetching weather forecast.";
     return { error: errorMessage };
   }
 }

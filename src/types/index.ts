@@ -34,3 +34,32 @@ export interface NotificationMessage {
   read?: boolean;
   link?: string; // Optional link for the notification
 }
+
+export interface FacilityAlert {
+  id: string;
+  title: string;
+  message: string;
+  severity: 'info' | 'warning' | 'danger';
+  timestamp: string; // ISO string
+}
+
+// For client-side display of weather, potentially simplified from Genkit output
+export interface WeatherAlertDisplay {
+  location: string;
+  temperature: string;
+  condition: string;
+  iconName: 'CloudSun' | 'CloudMoon' | 'Cloud' | 'CloudRain' | 'CloudSnow' | 'CloudLightning' | 'Wind' | 'Sun' | 'Moon' | 'Thermometer'; // Lucide icon names
+  lastUpdated: string; // Formatted time string
+  shortTermForecast?: string;
+  precipitationChance?: string;
+}
+
+// Output from Genkit Weather Flow
+export type WeatherForecastOutput = {
+  location: string;
+  temperature: string;
+  condition: string;
+  iconName: string; // Suggestion for Lucide icon
+  shortTermForecast: string;
+  precipitationChance?: string;
+};
