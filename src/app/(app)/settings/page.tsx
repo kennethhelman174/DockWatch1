@@ -8,11 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { User, Palette, Bell, LogOut, KeyRound, Save } from 'lucide-react';
+import { User, Palette, Bell, LogOut, KeyRound, Save, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTheme } from '@/components/ThemeProvider'; // Import useTheme
+import { useTheme } from '@/components/ThemeProvider';
 
-// Mock user data for display
 const mockUser = {
   name: 'Admin User',
   email: 'admin@dockwatch.app',
@@ -21,17 +20,14 @@ const mockUser = {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme(); // Use theme from context
+  const { theme, setTheme } = useTheme();
 
-  // Notification Settings
   const [masterNotifications, setMasterNotifications] = React.useState(true);
   const [emailNotifications, setEmailNotifications] = React.useState(true);
   const [inAppNotifications, setInAppNotifications] = React.useState(true);
 
   const handleSaveChanges = () => {
-    // In a real app, you'd save these settings to a backend or localStorage
     console.log('Settings saved:', {
-      // theme is already saved by ThemeProvider
       masterNotifications,
       emailNotifications,
       inAppNotifications,
@@ -56,9 +52,14 @@ export default function SettingsPage() {
       description: 'You have been successfully logged out. (Placeholder)',
       variant: 'default'
     });
-    // Actual logout logic would go here
   };
 
+  const handleIntegrationConnect = (serviceName: string) => {
+    toast({
+      title: `Connect to ${serviceName}`,
+      description: `${serviceName} integration is not yet implemented.`,
+    });
+  };
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-12">
@@ -68,7 +69,6 @@ export default function SettingsPage() {
       </div>
       <Separator />
 
-      {/* Appearance Settings */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center text-xl"><Palette className="mr-2 h-5 w-5 text-primary" /> Appearance</CardTitle>
@@ -91,7 +91,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Notification Settings */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center text-xl"><Bell className="mr-2 h-5 w-5 text-primary" /> Notifications</CardTitle>
@@ -141,7 +140,42 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Account Settings */}
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl"><LinkIcon className="mr-2 h-5 w-5 text-primary" /> Integrations</CardTitle>
+          <CardDescription>Connect DockWatch with other workplace software.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-2">
+          <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-card">
+            <div>
+              <h3 className="font-medium">SCALE Warehouse Management</h3>
+              <p className="text-xs text-muted-foreground pt-1">Synchronize dock activities with your WMS.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => handleIntegrationConnect('SCALE')}>
+              Configure
+            </Button>
+          </div>
+          <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-card">
+            <div>
+              <h3 className="font-medium">VelocityEHS</h3>
+              <p className="text-xs text-muted-foreground pt-1">Link safety incidents or checklists.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => handleIntegrationConnect('VelocityEHS')}>
+              Connect
+            </Button>
+          </div>
+          <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-card">
+            <div>
+              <h3 className="font-medium">Microsoft 365 / Azure</h3>
+              <p className="text-xs text-muted-foreground pt-1">Integrate with Outlook Calendar or Azure services.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => handleIntegrationConnect('Microsoft')}>
+              Setup
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center text-xl"><User className="mr-2 h-5 w-5 text-primary" /> Account</CardTitle>
