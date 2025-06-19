@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Home, CalendarDays, ClipboardPen, PackageSearch, Settings2, CircleHelp, LogOut, TruckIcon as DeliveryTruckIcon, Send, ArchiveRestore, BarChart3, ClipboardCheck } from 'lucide-react';
+import { Home, CalendarDays, ClipboardPen, PackageSearch, Settings2, CircleHelp, LogOut, TruckIcon as DeliveryTruckIcon, Send, ArchiveRestore, BarChart3, ClipboardCheck, Wrench } from 'lucide-react';
 // Note: TruckIcon is aliased as DeliveryTruckIcon to avoid conflict with a potential local Truck icon if any.
 
 const mainNavItems = [
@@ -23,6 +23,7 @@ const mainNavItems = [
   { href: '/receiving-loads', label: 'Receiving Loads', icon: ArchiveRestore },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dock-audits', label: 'Dock Audits', icon: ClipboardCheck },
+  { href: '/dock-maintenance', label: 'Dock Maintenance', icon: Wrench },
 ];
 
 const secondaryNavItems = [
@@ -71,7 +72,7 @@ export function AppSidebarContent() {
                 <SidebarMenuButton
                   className="w-full justify-start text-base"
                   isActive={pathname === item.href}
-                  tooltip={{content: item.label, side: 'right', align: 'center' }}
+                  tooltip={{content: item.label, side: 'right', align: 'center'}}
                 >
                   <item.icon className="h-5 w-5" />
                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>

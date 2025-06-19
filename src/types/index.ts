@@ -14,6 +14,7 @@ export interface Dock {
   occupiedSince?: string; // ISO timestamp when the dock became occupied
   preUnloadingChecksCompleted?: boolean;
   preReleaseChecksCompleted?: boolean;
+  nextPmDueDate?: string; // ISO string for next Preventive Maintenance due date
 }
 
 export interface Appointment {
@@ -63,3 +64,25 @@ export type WeatherForecastOutput = {
   shortTermForecast: string;
   precipitationChance?: string;
 };
+
+export type UserRole = 'admin' | 'shipping_coordinator' | 'dock_worker' | 'view_only';
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatarFallback: string; // e.g., "JD" for John Doe
+}
+
+export type MaintenanceType = 'preventive' | 'corrective';
+
+export interface MaintenanceRecord {
+  id: string;
+  dockNumber: number;
+  type: MaintenanceType;
+  description: string;
+  datePerformed: string; // ISO string
+  performedBy?: string;
+  nextPmDueDateUpdate?: string; // Optional: if this maintenance updates the PM schedule
+}

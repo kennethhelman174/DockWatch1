@@ -1,35 +1,35 @@
 
-import type { Dock, DockStatus, NotificationMessage, Appointment } from '@/types';
-import { subHours, addHours, addMinutes } from 'date-fns';
+import type { Dock, DockStatus, NotificationMessage, Appointment, AppUser, UserRole, MaintenanceRecord } from '@/types';
+import { subHours, addHours, addMinutes, addDays, subDays } from 'date-fns';
 
 const dockStatuses: DockStatus[] = ["available", "occupied", "maintenance", "scheduled"];
 const carriers = ["Swift", "J.B. Hunt", "Knight-Swift", "Schneider", "Werner", "Old Dominion", "XPO Logistics", "Ryder"];
 const trailerIds = ["TR001", "TR002", "TR003", "TR004", "TR005", "TR006", "TR007", "TR008", "TR009", "TR010", "TRX11", "TRX12", "TRX15", "TRZ20"];
+const userNames = ["Alice Smith", "Bob Johnson", "Charlie Brown", "Diana Prince", "Edward Newgate"];
+const userEmails = ["alice@example.com", "bob@example.com", "charlie@example.com", "diana@example.com", "edward@example.com"];
+const roles: UserRole[] = ['admin', 'shipping_coordinator', 'dock_worker', 'view_only'];
 
 const getRandomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 const generateRandomAppointmentsForDock = (dockId: string, dockStatus: DockStatus): Appointment[] => {
   const appointments: Appointment[] = [];
-  const numAppointments = (dockStatus === "scheduled" || Math.random() < 0.3) ? Math.floor(Math.random() * 2) + 1 : 0; // 1 to 2 appointments if scheduled or by chance
+  const numAppointments = (dockStatus === "scheduled" || Math.random() < 0.3) ? Math.floor(Math.random() * 2) + 1 : 0;
 
   let lastAppointmentTime = new Date();
 
   for (let i = 0; i < numAppointments; i++) {
     const appointmentType = Math.random() > 0.5 ? "arrival" : "departure";
-    // Ensure departure is after arrival if multiple appointments
-    const randomHourOffset = (i === 0 && appointmentType === 'arrival') ? Math.floor(Math.random() * 4) + 1 : Math.floor(Math.random() * 3) + 1; // 1 to 4 hours from now for first arrival, 1-3 for others
+    const randomHourOffset = (i === 0 && appointmentType === 'arrival') ? Math.floor(Math.random() * 4) + 1 : Math.floor(Math.random() * 3) + 1;
     
     let appointmentTime = addHours(lastAppointmentTime, randomHourOffset);
-    appointmentTime = addMinutes(appointmentTime, Math.floor(Math.random() * 60)); // Add random minutes
+    appointmentTime = addMinutes(appointmentTime, Math.floor(Math.random() * 60));
 
-    // If it's a departure, and the first appointment, ensure it's in the future from an implicit arrival
     if (i === 0 && appointmentType === 'departure' && dockStatus === 'occupied') {
-        appointmentTime = addHours(new Date(), Math.floor(Math.random() * 2) + 1); // Schedule departure 1-2 hours from now
+        appointmentTime = addHours(new Date(), Math.floor(Math.random() * 2) + 1);
     }
 
-
     appointments.push({
-      id: `appt-${dockId}-${i}-${Date.now()}`,
+      id: `appt-${dockId}-${i}-${Date.now()}${Math.random()}`,
       trailerId: getRandomElement(trailerIds),
       carrier: getRandomElement(carriers),
       time: appointmentTime.toISOString(),
@@ -43,18 +43,16 @@ const generateRandomAppointmentsForDock = (dockId: string, dockStatus: DockStatu
 const generateDocks = (start: number, end: number, type: "shipping" | "receiving"): Dock[] => {
   const docks: Dock[] = [];
   let scheduledCount = 0;
-  const maxScheduled = type === "shipping" ? 5 : 3; // Ensure at least 5 shipping docks are scheduled
+  const minScheduled = type === "shipping" ? 4 : 2; 
 
   for (let i = start; i <= end; i++) {
     let status = getRandomElement(dockStatuses);
     
-    // Force some docks to be 'scheduled' to meet the criteria
-    if (type === "shipping" && scheduledCount < maxScheduled && Math.random() < 0.5) {
-      status = "scheduled";
-      scheduledCount++;
-    } else if (type === "receiving" && scheduledCount < maxScheduled && Math.random() < 0.3) {
-      status = "scheduled";
-      scheduledCount++;
+    if (scheduledCount < minScheduled) {
+        if (Math.random() < 0.7 || (end - i < minScheduled - scheduledCount)) { // Increase chance or force if near end
+            status = "scheduled";
+            scheduledCount++;
+        }
     }
 
 
@@ -73,6 +71,10 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
     
     const dockId = `dock-${i}`;
     const scheduledAppointments = generateRandomAppointmentsForDock(dockId, status);
+    
+    // Generate next PM due date (e.g., within the next -10 to +90 days)
+    const pmDaysOffset = Math.floor(Math.random() * 101) - 10; // -10 to 90 days
+    const nextPmDueDate = addDays(new Date(), pmDaysOffset).toISOString();
 
     const dock: Dock = {
       id: dockId,
@@ -86,6 +88,7 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
       occupiedSince,
       preUnloadingChecksCompleted,
       preReleaseChecksCompleted,
+      nextPmDueDate,
     };
     docks.push(dock);
   }
@@ -95,12 +98,8 @@ const generateDocks = (start: number, end: number, type: "shipping" | "receiving
 export const mockShippingDocksInitial: Dock[] = generateDocks(100, 129, "shipping");
 export const mockReceivingDocksInitial: Dock[] = generateDocks(200, 223, "receiving");
 
-// Combine and process for final export
 let allGeneratedMockDocks: Dock[] = [...mockShippingDocksInitial, ...mockReceivingDocksInitial];
 
-// This mapping ensures that if a dock is 'scheduled', it reflects that correctly.
-// If a dock is 'occupied', it might also have future scheduled departures.
-// 'available' and 'maintenance' docks generally won't have current carrier/trailer or immediate appointments.
 export const allMockDocks: Dock[] = allGeneratedMockDocks.map(dock => {
   if (dock.status === "available" || dock.status === "maintenance") {
     return {
@@ -110,7 +109,6 @@ export const allMockDocks: Dock[] = allGeneratedMockDocks.map(dock => {
       occupiedSince: undefined,
       preUnloadingChecksCompleted: undefined,
       preReleaseChecksCompleted: undefined,
-      // Keep scheduledAppointments if any, could be for future maintenance slot or re-opening
     };
   }
   if (dock.status === "scheduled" && dock.scheduledAppointments && dock.scheduledAppointments.length > 0) {
@@ -118,25 +116,23 @@ export const allMockDocks: Dock[] = allGeneratedMockDocks.map(dock => {
       if (firstAppointment.type === 'arrival') {
           return {
             ...dock,
-            currentTrailer: firstAppointment.trailerId, // Pre-fill with next arrival
+            currentTrailer: firstAppointment.trailerId,
             currentCarrier: firstAppointment.carrier,
             occupiedSince: undefined,
             preUnloadingChecksCompleted: false,
             preReleaseChecksCompleted: false,
           };
-      } else { // First appointment is a departure, implies it's currently occupied by something else.
+      } else { 
            return {
             ...dock,
-            // currentTrailer and currentCarrier might be set by generateDocks, or can be randomized here too
             currentTrailer: dock.currentTrailer || getRandomElement(trailerIds),
             currentCarrier: dock.currentCarrier || getRandomElement(carriers),
-            occupiedSince: subHours(new Date(), Math.floor(Math.random() * 2) + 1).toISOString(), // Assume it became occupied recently
-            preUnloadingChecksCompleted: true, // Likely unloading is done if departure is scheduled
-            preReleaseChecksCompleted: Math.random() > 0.5, // Release checks might be pending
-           }
+            occupiedSince: subHours(new Date(), Math.floor(Math.random() * 2) + 1).toISOString(),
+            preUnloadingChecksCompleted: true, 
+            preReleaseChecksCompleted: Math.random() > 0.5,
+           };
       }
   }
-  // For 'occupied' docks, data is mostly set during generation.
   return dock;
 });
 
@@ -146,8 +142,8 @@ export const mockNotifications: NotificationMessage[] = [
     id: "notif-1",
     title: "Shipment ETA Updated",
     message: "Trailer TR005 to Dock 102 ETA now 14:30.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-    eta: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(), // 2 hours from now
+    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    eta: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
     priority: "high",
     read: false,
   },
@@ -155,7 +151,7 @@ export const mockNotifications: NotificationMessage[] = [
     id: "notif-2",
     title: "Maintenance Alert",
     message: "Dock 210 scheduled for maintenance at 16:00.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     priority: "medium",
     read: true,
   },
@@ -163,7 +159,7 @@ export const mockNotifications: NotificationMessage[] = [
     id: "notif-3",
     title: "Low Priority Update",
     message: "Weather conditions improving in the west.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     priority: "low",
     read: false,
   },
@@ -185,4 +181,41 @@ export const mockNotifications: NotificationMessage[] = [
     priority: "medium",
     read: false,
   }
+];
+
+export const mockAppUsers: AppUser[] = userNames.map((name, index) => {
+  const nameParts = name.split(" ");
+  return {
+    id: `user-${index + 1}`,
+    name: name,
+    email: userEmails[index],
+    role: getRandomElement(roles),
+    avatarFallback: `${nameParts[0][0]}${nameParts[1] ? nameParts[1][0] : ''}`.toUpperCase(),
+  };
+});
+
+// Ensure at least one admin for testing User Management display
+const adminUserIndex = mockAppUsers.findIndex(user => user.role === 'admin');
+if (adminUserIndex === -1 && mockAppUsers.length > 0) {
+  mockAppUsers[0].role = 'admin'; 
+} else if (mockAppUsers.length === 0) { // Should not happen with current setup but good practice
+  mockAppUsers.push({
+    id: 'user-admin-fallback',
+    name: 'Admin User',
+    email: 'admin@example.com',
+    role: 'admin',
+    avatarFallback: 'AU'
+  });
+}
+
+
+export const currentMockUser: AppUser = mockAppUsers.find(user => user.role === 'admin') || mockAppUsers[0]; // Use the first admin or first user
+
+export const mockMaintenanceRecords: MaintenanceRecord[] = [
+  { id: 'maint-1', dockNumber: 101, type: 'preventive', description: 'Quarterly PM service, lubricated joints, checked hydraulics.', datePerformed: subDays(new Date(), 45).toISOString(), performedBy: 'Facility Team A' },
+  { id: 'maint-2', dockNumber: 205, type: 'corrective', description: 'Replaced damaged dock bumper.', datePerformed: subDays(new Date(), 10).toISOString(), performedBy: 'Mike R.' },
+  { id: 'maint-3', dockNumber: 115, type: 'corrective', description: 'Fixed faulty sensor on dock lock.', datePerformed: subDays(new Date(), 5).toISOString(), performedBy: 'External Tech' },
+  { id: 'maint-4', dockNumber: 101, type: 'corrective', description: 'Adjusted dock plate alignment.', datePerformed: subDays(new Date(), 2).toISOString(), performedBy: 'Facility Team A' },
+  { id: 'maint-5', dockNumber: 210, type: 'preventive', description: 'Annual safety inspection and component check.', datePerformed: subDays(new Date(), 90).toISOString(), performedBy: 'Safety Officer + Team B', nextPmDueDateUpdate: addDays(new Date(), 275).toISOString() },
+  { id: 'maint-6', dockNumber: 108, type: 'corrective', description: 'Repaired minor electrical fault in control panel.', datePerformed: subDays(new Date(), 1).toISOString(), performedBy: 'Elec. Services Ltd.' },
 ];
