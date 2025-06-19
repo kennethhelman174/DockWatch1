@@ -20,16 +20,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Edit3, Trash2, UserPlus, Cog, Bell, Palette, Users, ShieldAlert, Puzzle, Save, Settings as SettingsIcon } from 'lucide-react';
+import { Edit3, Trash2, UserPlus, Cog, Bell, Palette, Users, ShieldAlert, Puzzle, Save, Settings as SettingsIcon, Shield, KeyRound, PlusCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const userRoleSchema = z.enum(['admin', 'shipping_coordinator', 'dock_worker', 'view_only']);
-const newUserFormSchema = z.object({
+const allUserRoles: UserRole[] = ['admin', 'shipping_coordinator', 'dock_worker', 'view_only'];
+
+
+const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   role: userRoleSchema,
 });
-type NewUserFormData = z.infer<typeof newUserFormSchema>;
+type UserFormData = z.infer<typeof userFormSchema>;
 
 const facilityAlertFormSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters." }),
@@ -37,6 +40,11 @@ const facilityAlertFormSchema = z.object({
   severity: z.enum(['info', 'warning', 'danger']),
 });
 type FacilityAlertFormData = z.infer<typeof facilityAlertFormSchema>;
+
+const newRoleFormSchema = z.object({
+  roleName: z.string().min(3, { message: "Role name must be at least 3 characters." }).regex(/^[a-z_]+$/, { message: "Role name must be lowercase with underscores only (e.g., new_role)."}),
+});
+type NewRoleFormData = z.infer<typeof newRoleFormSchema>;
 
 
 export default function SettingsPage() {
@@ -48,12 +56,19 @@ export default function SettingsPage() {
   const [allMockAppUsers, setAllMockAppUsers] = React.useState<AppUser[]>([]);
   
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<AppUser | null>(null);
+  
   const [customFacilityAlert, setCustomFacilityAlert] = React.useState<FacilityAlert | null>(null);
+  const [managedRoles, setManagedRoles] = React.useState<UserRole[]>(allUserRoles);
+  const [isAddRoleDialogOpen, setIsAddRoleDialogOpen] = React.useState(false);
+
 
   React.useEffect(() => {
     setMounted(true);
     setCurrentMockUser(importedCurrentMockUser);
     setAllMockAppUsers(importedAllMockAppUsers);
+    setManagedRoles(allUserRoles);
     
     if (typeof window !== 'undefined') {
       const storedAlert = localStorage.getItem('customFacilityAlert');
@@ -62,23 +77,43 @@ export default function SettingsPage() {
           setCustomFacilityAlert(JSON.parse(storedAlert));
         } catch (e) {
           console.error("Failed to parse custom facility alert from localStorage", e);
-          localStorage.removeItem('customFacilityAlert'); // Clear corrupted data
+          localStorage.removeItem('customFacilityAlert');
         }
       }
     }
   }, []);
 
-  const newUserForm = useForm<NewUserFormData>({
-    resolver: zodResolver(newUserFormSchema),
+  const addUserForm = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
     defaultValues: { name: "", email: "", role: "dock_worker" },
   });
+
+  const editUserForm = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+  });
+
+  React.useEffect(() => {
+    if (editingUser && isEditUserDialogOpen) {
+      editUserForm.reset({
+        name: editingUser.name,
+        email: editingUser.email,
+        role: editingUser.role,
+      });
+    }
+  }, [editingUser, isEditUserDialogOpen, editUserForm]);
+
 
   const facilityAlertForm = useForm<FacilityAlertFormData>({
     resolver: zodResolver(facilityAlertFormSchema),
     defaultValues: { title: "", message: "", severity: "info" },
   });
+  
+  const newRoleForm = useForm<NewRoleFormData>({
+    resolver: zodResolver(newRoleFormSchema),
+    defaultValues: { roleName: "" },
+  });
 
-  const onNewUserSubmit: SubmitHandler<NewUserFormData> = async (data) => {
+  const onAddUserSubmit: SubmitHandler<UserFormData> = async (data) => {
     const newUser: AppUser = {
       id: `user-${Date.now()}`,
       name: data.name,
@@ -89,16 +124,55 @@ export default function SettingsPage() {
     setAllMockAppUsers(prev => [...prev, newUser]);
     toast({
       title: "User Created",
-      description: `User ${data.name} has been added as a ${data.role}.`,
+      description: `User ${data.name} has been added as a ${data.role.replace('_', ' ')}.`,
       variant: "success",
     });
-    newUserForm.reset();
+    addUserForm.reset();
     setIsAddUserDialogOpen(false);
   };
+  
+  const onEditUserSubmit: SubmitHandler<UserFormData> = async (data) => {
+    if (!editingUser) return;
+    setAllMockAppUsers(prev =>
+      prev.map(user =>
+        user.id === editingUser.id
+          ? {
+              ...user,
+              name: data.name,
+              email: data.email,
+              role: data.role,
+              avatarFallback: `${data.name.split(" ")[0]?.[0] || ''}${data.name.split(" ")[1]?.[0] || ''}`.toUpperCase(),
+            }
+          : user
+      )
+    );
+    toast({
+      title: "User Updated",
+      description: `User ${data.name}'s details have been updated.`,
+      variant: "success",
+    });
+    setIsEditUserDialogOpen(false);
+    setEditingUser(null);
+  };
+  
+  const handleDeleteUser = (userId: string, userName: string) => {
+    setAllMockAppUsers(prev => prev.filter(user => user.id !== userId));
+    toast({
+        title: "User Deleted",
+        description: `User ${userName} has been removed. (Client-side mock)`,
+        variant: "destructive",
+    });
+  };
+
+  const handleEditUserClick = (user: AppUser) => {
+    setEditingUser(user);
+    setIsEditUserDialogOpen(true);
+  };
+
 
   const onFacilityAlertSubmit: SubmitHandler<FacilityAlertFormData> = async (data) => {
     const newAlert: FacilityAlert = {
-      id: 'custom-fa1', // Fixed ID for the single custom alert
+      id: 'custom-fa1', 
       title: data.title,
       message: data.message,
       severity: data.severity,
@@ -126,6 +200,23 @@ export default function SettingsPage() {
       description: "The custom facility alert has been cleared from the dashboard.",
     });
   };
+  
+  const onNewRoleSubmit: SubmitHandler<NewRoleFormData> = async (data) => {
+    const newRole = data.roleName as UserRole; // Casting for mock, real app needs type validation
+    if (managedRoles.includes(newRole)) {
+      newRoleForm.setError("roleName", { type: "manual", message: "This role already exists." });
+      return;
+    }
+    setManagedRoles(prev => [...prev, newRole]);
+    toast({
+      title: "Role Added (Mock)",
+      description: `Role "${data.roleName}" has been added. Permissions are not managed in this prototype.`,
+      variant: "success",
+    });
+    newRoleForm.reset();
+    setIsAddRoleDialogOpen(false);
+  };
+
 
   if (!mounted || !currentMockUser) {
     return (
@@ -149,10 +240,11 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="appearance" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6">
           <TabsTrigger value="appearance"><Palette className="mr-2 h-4 w-4" />Appearance</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />Notifications</TabsTrigger>
           <TabsTrigger value="user_management"><Users className="mr-2 h-4 w-4" />User Management</TabsTrigger>
+          <TabsTrigger value="role_management"><Shield className="mr-2 h-4 w-4" />Role Management</TabsTrigger>
           <TabsTrigger value="facility_alerts"><ShieldAlert className="mr-2 h-4 w-4" />Facility Alerts</TabsTrigger>
           <TabsTrigger value="integrations"><Puzzle className="mr-2 h-4 w-4" />Integrations</TabsTrigger>
         </TabsList>
@@ -233,36 +325,24 @@ export default function SettingsPage() {
                       <DialogTitle>Create New User</DialogTitle>
                       <DialogDescription>Fill in the details to add a new user to the system.</DialogDescription>
                     </DialogHeader>
-                    <Form {...newUserForm}>
-                      <form onSubmit={newUserForm.handleSubmit(onNewUserSubmit)} className="space-y-4 py-4">
-                        <FormField control={newUserForm.control} name="name" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
+                    <Form {...addUserForm}>
+                      <form onSubmit={addUserForm.handleSubmit(onAddUserSubmit)} className="space-y-4 py-4">
+                        <FormField control={addUserForm.control} name="name" render={({ field }) => (
+                          <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={newUserForm.control} name="email" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl><Input type="email" placeholder="e.g., jane.doe@example.com" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
+                        <FormField control={addUserForm.control} name="email" render={({ field }) => (
+                          <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="e.g., jane.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={newUserForm.control} name="role" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Role</FormLabel>
+                        <FormField control={addUserForm.control} name="role" render={({ field }) => (
+                          <FormItem><FormLabel>Role</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
                               <SelectContent>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="shipping_coordinator">Shipping Coordinator</SelectItem>
-                                <SelectItem value="dock_worker">Dock Worker</SelectItem>
-                                <SelectItem value="view_only">View Only</SelectItem>
+                                {managedRoles.map(role => (
+                                  <SelectItem key={role} value={role}>{role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                                ))}
                               </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
+                            </Select><FormMessage /></FormItem>
                         )} />
                         <DialogFooter>
                           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
@@ -278,38 +358,22 @@ export default function SettingsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px]">Avatar</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="w-[80px]">Avatar</TableHead><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {allMockAppUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell>
-                        <Avatar>
-                          <AvatarImage src={user.avatarUrl} alt={user.name} />
-                          <AvatarFallback>{user.avatarFallback}</AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell><Avatar><AvatarImage src={user.avatarUrl} alt={user.name} /><AvatarFallback>{user.avatarFallback}</AvatarFallback></Avatar></TableCell>
+                      <TableCell className="font-medium">{user.name}</TableCell><TableCell>{user.email}</TableCell>
                       <TableCell className="capitalize">{user.role.replace('_', ' ')}</TableCell>
                       <TableCell className="text-right">
                         {currentMockUser?.role === 'admin' ? (
-                          <div className="space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Edit User (Placeholder)", description: `Editing ${user.name}.`})} className="hover:bg-primary/10">
-                              <Edit3 className="h-4 w-4 text-primary" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Delete User (Placeholder)", description: `Deleting ${user.name}.`, variant: "destructive"})} className="hover:bg-destructive/10">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                          <div className="space-x-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleEditUserClick(user)} className="hover:bg-primary/10"><Edit3 className="h-4 w-4 text-primary" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user.id, user.name)} className="hover:bg-destructive/10"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">N/A</span>
-                        )}
+                        ) : (<span className="text-xs text-muted-foreground">N/A</span>)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -317,6 +381,97 @@ export default function SettingsPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Edit User Dialog */}
+        {editingUser && (
+            <Dialog open={isEditUserDialogOpen} onOpenChange={(isOpen) => { setIsEditUserDialogOpen(isOpen); if (!isOpen) setEditingUser(null); }}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                <DialogTitle>Edit User: {editingUser.name}</DialogTitle>
+                <DialogDescription>Update the user's details below.</DialogDescription>
+                </DialogHeader>
+                <Form {...editUserForm}>
+                <form onSubmit={editUserForm.handleSubmit(onEditUserSubmit)} className="space-y-4 py-4">
+                    <FormField control={editUserForm.control} name="name" render={({ field }) => (
+                        <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={editUserForm.control} name="email" render={({ field }) => (
+                        <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={editUserForm.control} name="role" render={({ field }) => (
+                        <FormItem><FormLabel>Role</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent>
+                            {managedRoles.map(role => (
+                                <SelectItem key={role} value={role}>{role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select><FormMessage /></FormItem>
+                    )} />
+                    <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                    <Button type="submit"><Save className="mr-2 h-4 w-4" />Save Changes</Button>
+                    </DialogFooter>
+                </form>
+                </Form>
+            </DialogContent>
+            </Dialog>
+        )}
+
+        <TabsContent value="role_management">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Role Management</CardTitle>
+                        <CardDescription>Define and manage user roles and their permissions. (Prototype)</CardDescription>
+                    </div>
+                     <Dialog open={isAddRoleDialogOpen} onOpenChange={setIsAddRoleDialogOpen}>
+                        <DialogTrigger asChild>
+                           {currentMockUser?.role === 'admin' && <Button size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add New Role</Button>}
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader><DialogTitle>Add New Role</DialogTitle><DialogDescription>Enter the name for the new role.</DialogDescription></DialogHeader>
+                            <Form {...newRoleForm}>
+                                <form onSubmit={newRoleForm.handleSubmit(onNewRoleSubmit)} className="space-y-4 py-4">
+                                    <FormField control={newRoleForm.control} name="roleName" render={({ field }) => (
+                                        <FormItem><FormLabel>Role Name</FormLabel><FormControl><Input placeholder="e.g., new_role_name" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <DialogFooter>
+                                        <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                                        <Button type="submit">Add Role</Button>
+                                    </DialogFooter>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Role Name</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {managedRoles.map((role) => (
+                                <TableRow key={role}>
+                                    <TableCell className="font-medium capitalize">{role.replace('_', ' ')}</TableCell>
+                                    <TableCell className="text-right">
+                                        {currentMockUser?.role === 'admin' ? (
+                                        <div className="space-x-1">
+                                            <Button variant="outline" size="sm" onClick={() => toast({ title: "Edit Permissions (Placeholder)", description: `Configuring permissions for ${role}.`})}>
+                                                <KeyRound className="mr-2 h-4 w-4"/>Edit Permissions
+                                            </Button>
+                                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => toast({ title: "Remove Role (Placeholder)", description: `Removing ${role} role. Check assignments first.`, variant: "destructive"})}>
+                                                <Trash2 className="mr-2 h-4 w-4"/>Remove
+                                            </Button>
+                                        </div>
+                                        ) : (<span className="text-xs text-muted-foreground">N/A</span>)}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </TabsContent>
         
         <TabsContent value="facility_alerts">
@@ -338,32 +493,19 @@ export default function SettingsPage() {
                         </div>
                     )}
                     <FormField control={facilityAlertForm.control} name="title" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Alert Title</FormLabel>
-                        <FormControl><Input placeholder="e.g., Gate B Maintenance" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormItem><FormLabel>Alert Title</FormLabel><FormControl><Input placeholder="e.g., Gate B Maintenance" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={facilityAlertForm.control} name="message" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Alert Message</FormLabel>
-                        <FormControl><Input placeholder="e.g., Gate B will be closed from 2 PM to 4 PM today." {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormItem><FormLabel>Alert Message</FormLabel><FormControl><Input placeholder="e.g., Gate B will be closed from 2 PM to 4 PM today." {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={facilityAlertForm.control} name="severity" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Severity</FormLabel>
+                      <FormItem><FormLabel>Severity</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select severity" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="info">Info (Blue)</SelectItem>
-                            <SelectItem value="warning">Warning (Orange)</SelectItem>
-                            <SelectItem value="danger">Danger (Red)</SelectItem>
+                            <SelectItem value="info">Info (Blue)</SelectItem><SelectItem value="warning">Warning (Orange)</SelectItem><SelectItem value="danger">Danger (Red)</SelectItem>
                           </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                        </Select><FormMessage /></FormItem>
                     )} />
                   </CardContent>
                   <CardFooter>
@@ -384,18 +526,9 @@ export default function SettingsPage() {
               <CardDescription>Connect DockWatch with other services. (Placeholders)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-md">
-                <Label className="font-medium">Microsoft 365 / Azure</Label>
-                <Button variant="outline" disabled>Connect</Button>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-md">
-                <Label className="font-medium">Slack</Label>
-                <Button variant="outline" disabled>Connect</Button>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-md">
-                <Label className="font-medium">External WMS</Label>
-                <Button variant="outline" disabled>Configure API</Button>
-              </div>
+              <div className="flex items-center justify-between p-4 border rounded-md"><Label className="font-medium">Microsoft 365 / Azure</Label><Button variant="outline" disabled>Connect</Button></div>
+              <div className="flex items-center justify-between p-4 border rounded-md"><Label className="font-medium">Slack</Label><Button variant="outline" disabled>Connect</Button></div>
+              <div className="flex items-center justify-between p-4 border rounded-md"><Label className="font-medium">External WMS</Label><Button variant="outline" disabled>Configure API</Button></div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -403,3 +536,6 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+
+    
