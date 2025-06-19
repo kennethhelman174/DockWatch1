@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { BarChart3, CalendarIcon, FileText, PieChart, LineChartIcon, Download } from 'lucide-react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart3, CalendarIcon, FileText, PieChart, LineChartIcon, Download, Eye, AlertTriangle, Ship, CheckSquare } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPrimitivePieChart, Pie as RechartsPrimitivePie } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 
 const commonChartConfig = {
@@ -99,8 +99,9 @@ export default function AnalyticsPage() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="gemba_walk">Gemba Walk Daily</TabsTrigger>
           <TabsTrigger value="dock_reports">Dock Reports</TabsTrigger>
           <TabsTrigger value="shipment_reports">Shipment Reports</TabsTrigger>
           <TabsTrigger value="generate_report">Generate Report</TabsTrigger>
@@ -160,6 +161,63 @@ export default function AnalyticsPage() {
             </CardFooter>
           </Card>
         </TabsContent>
+        
+        <TabsContent value="gemba_walk" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" /> Gemba Walk - Daily Snapshot</CardTitle>
+              <CardDescription>Key operational metrics for today. Refreshed daily.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="bg-card/50">
+                <CardHeader className="pb-2">
+                  <CardDescription>Active Docks</CardDescription>
+                  <CardTitle className="text-3xl">32 / 54</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-xs text-muted-foreground">60% utilization</p></CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardHeader className="pb-2">
+                  <CardDescription>Trailers Processed (Today)</CardDescription>
+                  <CardTitle className="text-3xl">78</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-xs text-muted-foreground">+2 since last check-in</p></CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardHeader className="pb-2">
+                  <CardDescription>Avg. Turnaround (Today)</CardDescription>
+                  <CardTitle className="text-3xl">38 min</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-xs text-muted-foreground">Target: &lt;45 min</p></CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardHeader className="pb-2">
+                  <CardDescription className="flex items-center"><AlertTriangle className="mr-1.5 h-4 w-4 text-warning" /> Safety Observations (Today)</CardDescription>
+                  <CardTitle className="text-3xl">2</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-xs text-muted-foreground">0 critical incidents</p></CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardHeader className="pb-2">
+                  <CardDescription className="flex items-center"><Ship className="mr-1.5 h-4 w-4 text-blue-500"/> Urgent Shipments (Next 4hr)</CardDescription>
+                  <CardTitle className="text-3xl">3</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-xs text-muted-foreground">Hot loads: #A456, #B789</p></CardContent>
+              </Card>
+               <Card className="bg-card/50">
+                <CardHeader className="pb-2">
+                  <CardDescription className="flex items-center"><CheckSquare className="mr-1.5 h-4 w-4 text-green-500"/> Dock Checks Pending</CardDescription>
+                  <CardTitle className="text-3xl">5</CardTitle>
+                </CardHeader>
+                <CardContent><p className="text-xs text-muted-foreground">Pre-release checks for D102, D105...</p></CardContent>
+              </Card>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              This is a snapshot for the current operational day. Data is illustrative.
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
 
         <TabsContent value="dock_reports" className="space-y-6">
           <Card>
@@ -208,11 +266,11 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent className="flex justify-center items-center h-[300px]">
                <ChartContainer config={commonChartConfig} className="mx-auto aspect-square max-h-[250px]">
-                <RechartsPrimitive.PieChart>
+                <RechartsPrimitivePieChart>
                   <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                  <RechartsPrimitive.Pie data={mockPieChartData} dataKey="value" nameKey="name" />
+                  <RechartsPrimitivePie data={mockPieChartData} dataKey="value" nameKey="name" />
                   <ChartLegend content={<ChartLegendContent nameKey="name" />} className="flex-wrap"/>
-                </RechartsPrimitive.PieChart>
+                </RechartsPrimitivePieChart>
               </ChartContainer>
             </CardContent>
              <CardFooter className="text-xs text-muted-foreground">
@@ -315,3 +373,5 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
+    
