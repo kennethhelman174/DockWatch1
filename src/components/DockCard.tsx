@@ -86,9 +86,16 @@ const displayConfigs: Record<DockStatus, DockDisplayConfig> = {
 export function DockCard({ dock, onClick }: DockCardProps) {
   const config = displayConfigs[dock.status];
 
+  const isSafetyCheckPendingAndOccupied =
+    dock.status === 'occupied' &&
+    (dock.preUnloadingChecksCompleted !== true || dock.preReleaseChecksCompleted !== true);
+
   return (
     <Card
-      className="hover:shadow-lg transition-shadow duration-200 cursor-pointer flex flex-col bg-card"
+      className={cn(
+        "hover:shadow-lg transition-shadow duration-200 cursor-pointer flex flex-col bg-card",
+        isSafetyCheckPendingAndOccupied && "animate-flash-border border-destructive"
+      )}
       onClick={onClick}
       aria-label={`Dock ${dock.number}, Status: ${config.label}, Type: ${dock.type}`}
       tabIndex={0}

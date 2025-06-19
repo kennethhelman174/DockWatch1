@@ -103,10 +103,15 @@ export default {
             height: '0',
           },
         },
+        'flash-border': {
+          '0%, 100%': { boxShadow: '0 0 0 3px rgba(220, 38, 38, 0.7)' }, /* destructive color at 70% opacity */
+          '50%': { boxShadow: '0 0 0 0px rgba(220, 38, 38, 0)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'flash-border': 'flash-border 1.5s infinite ease-in-out',
       },
     },
   },

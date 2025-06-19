@@ -38,8 +38,16 @@ export function DigitalDockCard({ dock, currentTime }: DigitalDockCardProps) {
 
   const cardBorderColor = dock.type === 'shipping' ? 'border-blue-500' : 'border-orange-500';
 
+  const isSafetyCheckPendingAndOccupied =
+    dock.status === 'occupied' &&
+    (dock.preUnloadingChecksCompleted !== true || dock.preReleaseChecksCompleted !== true);
+
   return (
-    <Card className={cn("flex flex-col shadow-md h-full", cardBorderColor, "border-2")}>
+    <Card className={cn(
+      "flex flex-col shadow-md h-full", 
+      "border-2", // Base border thickness
+      isSafetyCheckPendingAndOccupied ? 'animate-flash-border border-destructive' : cardBorderColor
+      )}>
       <CardHeader className="p-3 bg-card-foreground/5">
         <div className="flex justify-between items-center">
           <CardTitle className="text-2xl font-bold text-card-foreground">Dock {dock.number}</CardTitle>
