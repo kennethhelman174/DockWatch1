@@ -1,17 +1,10 @@
 
 "use client";
 
-import * as React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import type { Dock, Appointment, DockStatus } from '@/types';
 import { CheckCircle2, XCircle, Wrench, CalendarClock, Truck, LucideIcon, ListChecks, History, Edit3, Paperclip, ShieldCheck, Save } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,11 +13,10 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // Using direct Label
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; // Not used with direct state, but good for structure if using react-hook-form later
 
 interface DockDetailsModalProps {
   dock: Dock | null;
@@ -260,33 +252,30 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
           <div className="space-y-4 py-4">
             {isEditing ? (
               <div className="space-y-4">
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
+                <div className="space-y-2">
+                  <Label htmlFor="dock-status-edit">Status</Label>
                   <Select value={editedStatus} onValueChange={(value) => setEditedStatus(value as DockStatus)}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status..." />
-                      </SelectTrigger>
-                    </FormControl>
+                    <SelectTrigger id="dock-status-edit">
+                      <SelectValue placeholder="Select status..." />
+                    </SelectTrigger>
                     <SelectContent>
                       {dockStatusesForSelect.map(s => (
                         <SelectItem key={s} value={s}>{statusConfigs[s].label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </FormItem>
+                </div>
                 
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter notes for this dock..."
-                      value={editedNotes}
-                      onChange={(e) => setEditedNotes(e.target.value)}
-                      rows={4}
-                    />
-                  </FormControl>
-                </FormItem>
+                <div className="space-y-2">
+                  <Label htmlFor="dock-notes-edit">Notes</Label>
+                  <Textarea
+                    id="dock-notes-edit"
+                    placeholder="Enter notes for this dock..."
+                    value={editedNotes}
+                    onChange={(e) => setEditedNotes(e.target.value)}
+                    rows={4}
+                  />
+                </div>
               </div>
             ) : (
               <>
@@ -303,7 +292,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
               </>
             )}
 
-            {(dock.status === 'occupied' || dock.status === 'scheduled') && (
+            {(dock.status === 'occupied' || dock.status === 'scheduled') && !isEditing && (
               <div>
                 <h4 className="font-medium text-sm mb-1">Current Assignment</h4>
                 {dock.currentCarrier && <p className="text-sm">Carrier: <span className="text-muted-foreground">{dock.currentCarrier}</span></p>}
@@ -389,3 +378,5 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
     </Dialog>
   );
 }
+
+    
