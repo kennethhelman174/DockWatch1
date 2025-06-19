@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { User, Palette, Bell, LogOut, KeyRound, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/components/ThemeProvider'; // Import useTheme
 
 // Mock user data for display
 const mockUser = {
@@ -20,9 +21,7 @@ const mockUser = {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-
-  // Appearance Settings
-  const [theme, setTheme] = React.useState('system');
+  const { theme, setTheme } = useTheme(); // Use theme from context
 
   // Notification Settings
   const [masterNotifications, setMasterNotifications] = React.useState(true);
@@ -32,7 +31,7 @@ export default function SettingsPage() {
   const handleSaveChanges = () => {
     // In a real app, you'd save these settings to a backend or localStorage
     console.log('Settings saved:', {
-      theme,
+      // theme is already saved by ThemeProvider
       masterNotifications,
       emailNotifications,
       inAppNotifications,
@@ -55,7 +54,7 @@ export default function SettingsPage() {
      toast({
       title: 'Logged Out',
       description: 'You have been successfully logged out. (Placeholder)',
-      variant: 'default' // Using default variant for non-destructive placeholder
+      variant: 'default'
     });
     // Actual logout logic would go here
   };
@@ -78,7 +77,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-4 pt-2">
           <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-card">
             <Label htmlFor="theme-select" className="font-medium">Theme</Label>
-            <Select value={theme} onValueChange={setTheme}>
+            <Select value={theme} onValueChange={(newTheme) => setTheme(newTheme as "light" | "dark" | "system")}>
               <SelectTrigger id="theme-select" className="w-[180px]">
                 <SelectValue placeholder="Select theme" />
               </SelectTrigger>
