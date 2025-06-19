@@ -1,6 +1,6 @@
+
 import type { Metadata } from 'next';
-import '../globals.css'; // Assuming globals.css is in src/app
-import { cn } from '@/lib/utils';
+import '../globals.css'; // Ensures global styles are available for this segment
 
 export const metadata: Metadata = {
   title: 'DockWatch - Digital Display',
@@ -12,18 +12,11 @@ export default function DigitalDisplayLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className={cn("font-body antialiased bg-background text-foreground min-h-screen flex flex-col")}>
-        <main className="flex-grow w-full">
-          {children}
-        </main>
-      </body>
-    </html>
-  );
+  // This layout is nested within the RootLayout.
+  // It should not render <html>, <head>, or <body> tags.
+  // The RootLayout (src/app/layout.tsx) already handles the main document structure,
+  // including loading the Inter font and global CSS.
+  // This component simply passes through children for the /digital-display segment.
+  // The actual page content (digital-display/page.tsx) defines its own full-screen structure.
+  return <>{children}</>;
 }
