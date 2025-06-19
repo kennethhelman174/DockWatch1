@@ -16,76 +16,91 @@ interface ThemeProviderState {
   setTheme: (theme: Theme) => void;
 }
 
-const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "dockwatch-app-theme", // Using a more specific key
+  storageKey = "dockwatch-app-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
-      } catch (e) {
-        console.error("Error reading theme from localStorage", e);
-        return defaultTheme;
-      }
-    }
-    return defaultTheme;
-  });
+  // Initialize state with defaultTheme to ensure server and initial client render match.
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
 
+  // Effect to load theme from localStorage on mount (client-side only)
+  // This runs AFTER the initial server-render and client-render match.
   useEffect(() => {
+    let initialTheme = defaultTheme;
+    try {
+      // Ensure this runs only on the client
+      if (typeof window !== 'undefined') {
+        const storedThemeValue = localStorage.getItem(storageKey) as Theme | null;
+        if (storedThemeValue && ["light", "dark", "system"].includes(storedThemeValue)) {
+          initialTheme = storedThemeValue;
+        }
+      }
+    } catch (e) {
+      console.error(`Error reading initial theme ('${storageKey}') from localStorage:`, e);
+    }
+    // Set the theme based on localStorage or default.
+    // This ensures the state reflects the persisted preference or default.
+    if (theme !== initialTheme) { // Only update if different to avoid unnecessary re-render
+        setThemeState(initialTheme);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey, defaultTheme]); // Removed 'theme' from deps to prevent loop on state update
+
+
+  // Effect to apply theme to DOM and listen for system changes
+  useEffect(() => {
+    // Ensure this only runs on client
     if (typeof window === 'undefined') return;
 
     const root = window.document.documentElement;
     
-    const applyTheme = (currentTheme: Theme) => {
+    const applyActualTheme = (currentThemeToApply: Theme) => {
       root.classList.remove("light", "dark");
-      if (currentTheme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        root.classList.add(systemTheme);
-      } else {
-        root.classList.add(currentTheme);
+      let resolvedTheme = currentThemeToApply;
+      if (currentThemeToApply === "system") {
+        resolvedTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
+      root.classList.add(resolvedTheme);
     };
 
-    applyTheme(theme); // Apply theme on initial load and when theme state changes
+    applyActualTheme(theme); // Apply the current state theme
 
-    // Listener for system theme changes, only if current theme is 'system'
+    let mediaQuery: MediaQueryList | undefined;
+    let handleChange: (() => void) | undefined;
+
     if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleChange = () => {
-        // Only re-apply if the persisted theme is still 'system'
-        // This check might be redundant if setTheme correctly updates localStorage and triggers this effect
-        // But it's safer to ensure we don't override a specific user choice ("light" or "dark")
-        // with a system change if the state `theme` is still "system" due to a race condition or direct manipulation.
-        // Simpler: if the component's state 'theme' is 'system', then we respect system changes.
-         applyTheme("system");
+      mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      handleChange = () => {
+        applyActualTheme("system"); // Re-evaluate and apply system theme
       };
       mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
     }
-  }, [theme]); // Rerun effect if theme state changes
+    
+    return () => {
+      if (mediaQuery && handleChange) {
+        mediaQuery.removeEventListener("change", handleChange);
+      }
+    };
+  }, [theme]); // This effect runs when `theme` state changes.
+
+  const handleSetTheme = (newTheme: Theme) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, newTheme);
+      }
+    } catch (e) {
+      console.error(`Error setting theme ('${storageKey}') in localStorage:`, e);
+    }
+    setThemeState(newTheme);
+  };
 
   const value = {
-    theme,
-    setTheme: (newTheme: Theme) => {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(storageKey, newTheme);
-        } catch (e) {
-          console.error("Error setting theme in localStorage", e);
-        }
-      }
-      setTheme(newTheme);
-    },
+    theme, // Current theme state
+    setTheme: handleSetTheme, // Function to change theme
   };
 
   return (
@@ -102,3 +117,4 @@ export const useTheme = () => {
   }
   return context;
 };
+
