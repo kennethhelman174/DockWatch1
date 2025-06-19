@@ -20,13 +20,12 @@ export default function DashboardPage() {
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
 
   React.useEffect(() => {
-    // Initialize docks data on the client side after hydration
     setClientDocks(importedAllMockDocks);
   }, []);
 
   const handleFilterChange = React.useCallback((newFilters: DockFilters) => {
     setFilters(newFilters);
-  }, [setFilters]); // setFilters from useState is stable, so this could also be []
+  }, []);
 
   const handleDockClick = (dock: Dock) => {
     setSelectedDock(dock);
@@ -37,6 +36,34 @@ export default function DashboardPage() {
     setIsModalOpen(false);
     setSelectedDock(null);
   };
+
+  const handleUpdateDock = React.useCallback((updatedData: Pick<Dock, 'id' | 'status' | 'notes'>) => {
+    setClientDocks(prevDocks =>
+      prevDocks.map(d => {
+        if (d.id === updatedData.id) {
+          const newDockData: Partial<Dock> = {
+            notes: updatedData.notes,
+            status: updatedData.status,
+          };
+          if (updatedData.status === 'available') {
+            newDockData.currentCarrier = undefined;
+            newDockData.currentTrailer = undefined;
+            // Potentially clear scheduledAppointments if status becomes 'available' based on business logic
+            // For now, keep them as they might be future appointments.
+          }
+          
+          const newDock = { ...d, ...newDockData };
+
+          if (selectedDock && selectedDock.id === newDock.id) {
+            setSelectedDock(newDock);
+          }
+          return newDock;
+        }
+        return d;
+      })
+    );
+  }, [selectedDock]);
+
 
   const filteredDocks = React.useMemo(() => {
     return clientDocks.filter((dock) => {
@@ -78,7 +105,12 @@ export default function DashboardPage() {
       )}
 
       {isModalOpen && selectedDock && (
-        <DockDetailsModal dock={selectedDock} isOpen={isModalOpen} onClose={closeModal} />
+        <DockDetailsModal 
+          dock={selectedDock} 
+          isOpen={isModalOpen} 
+          onClose={closeModal}
+          onUpdateDock={handleUpdateDock}
+        />
       )}
     </div>
   );

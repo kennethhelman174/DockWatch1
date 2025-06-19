@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Dock, Appointment } from '@/types';
-import { CheckCircle2, XCircle, Wrench, CalendarClock, Truck, LucideIcon, ListChecks, History, Edit3, Paperclip, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import type { Dock, Appointment, DockStatus } from '@/types';
+import { CheckCircle2, XCircle, Wrench, CalendarClock, Truck, LucideIcon, ListChecks, History, Edit3, Paperclip, ShieldCheck, Save } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -22,12 +22,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; // Not used with direct state, but good for structure if using react-hook-form later
 
 interface DockDetailsModalProps {
   dock: Dock | null;
   isOpen: boolean;
   onClose: () => void;
+  onUpdateDock: (updatedData: Pick<Dock, 'id' | 'status' | 'notes'>) => void;
 }
 
 interface StatusConfig {
@@ -36,12 +39,15 @@ interface StatusConfig {
   badgeVariant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning";
 }
 
-const statusConfigs: Record<Dock['status'], StatusConfig> = {
+const statusConfigs: Record<DockStatus, StatusConfig> = {
   available: { icon: CheckCircle2, label: 'Available', badgeVariant: 'success' },
   occupied: { icon: Truck, label: 'Occupied', badgeVariant: 'destructive' },
   maintenance: { icon: Wrench, label: 'Maintenance', badgeVariant: 'warning' },
   scheduled: { icon: CalendarClock, label: 'Scheduled', badgeVariant: 'default' },
 };
+
+const dockStatusesForSelect: DockStatus[] = ["available", "occupied", "maintenance", "scheduled"];
+
 
 interface SafetyCheckItem {
   id: string;
@@ -68,8 +74,12 @@ const preReleaseChecks: SafetyCheckItem[] = [
 
 type ChecklistState = Record<string, boolean>;
 
-export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProps) {
+export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDetailsModalProps) {
   const { toast } = useToast();
+
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editedStatus, setEditedStatus] = React.useState<DockStatus | undefined>(dock?.status);
+  const [editedNotes, setEditedNotes] = React.useState<string | undefined>(dock?.notes);
 
   const [preUnloadingState, setPreUnloadingState] = React.useState<ChecklistState>({});
   const [preReleaseState, setPreReleaseState] = React.useState<ChecklistState>({});
@@ -79,26 +89,34 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
 
 
   React.useEffect(() => {
-    if (isOpen && dock && dock.status === 'occupied') {
-      const initialUnloadChecks: ChecklistState = preUnloadingChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {});
-      const initialReleaseChecks: ChecklistState = preReleaseChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {});
-      setPreUnloadingState(initialUnloadChecks);
-      setPreReleaseState(initialReleaseChecks);
-      setPreUnloadingCompleted(false);
-      setPreReleaseCompleted(false);
-      setOpenAccordionItems(['safety-checklists']); 
-    } else {
-      setOpenAccordionItems([]);
+    if (isOpen && dock) {
+      if (dock.status === 'occupied' && !isEditing) {
+        const initialUnloadChecks: ChecklistState = preUnloadingChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {});
+        const initialReleaseChecks: ChecklistState = preReleaseChecks.reduce((acc, check) => ({ ...acc, [check.id]: false }), {});
+        setPreUnloadingState(initialUnloadChecks);
+        setPreReleaseState(initialReleaseChecks);
+        setPreUnloadingCompleted(false);
+        setPreReleaseCompleted(false);
+        setOpenAccordionItems(['safety-checklists']); 
+      } else if (!isEditing) {
+        setOpenAccordionItems([]);
+      }
+      // When modal opens or dock changes, reset edit state if not already editing
+      if (!isEditing) {
+        setEditedStatus(dock.status);
+        setEditedNotes(dock.notes || "");
+      }
+    } else if (!isOpen) {
+      setIsEditing(false); // Reset editing state when modal closes
     }
-  }, [isOpen, dock]);
+  }, [isOpen, dock, isEditing]);
 
   if (!dock) return null;
 
-  const config = statusConfigs[dock.status];
-  const StatusIcon = config.icon;
+  const currentDockStatusConfig = statusConfigs[dock.status];
+  const StatusIcon = currentDockStatusConfig.icon;
 
   const handleViewHistoryClick = () => {
-    if (!dock) return;
     toast({
       title: "Feature In Progress",
       description: `Viewing full history for Dock ${dock.number} is under development.`,
@@ -106,12 +124,36 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
   };
 
   const handleEditDockClick = () => {
-    if (!dock) return;
+    setIsEditing(true);
+    setEditedStatus(dock.status);
+    setEditedNotes(dock.notes || "");
+  };
+  
+  const handleSaveChangesClick = () => {
+    if (!editedStatus) {
+        toast({ title: "Error", description: "Status cannot be empty.", variant: "destructive" });
+        return;
+    }
+    onUpdateDock({
+      id: dock.id,
+      status: editedStatus,
+      notes: editedNotes || "", 
+    });
+    setIsEditing(false);
     toast({
-      title: "Feature In Progress",
-      description: `Editing capabilities for Dock ${dock.number} are under development.`,
+      title: "Dock Updated",
+      description: `Dock ${dock.number} details have been saved.`,
+      variant: "success",
     });
   };
+
+  const handleCancelEditClick = () => {
+    setIsEditing(false);
+    // Optionally reset editedStatus and editedNotes to original dock values
+    setEditedStatus(dock.status);
+    setEditedNotes(dock.notes || "");
+  };
+
 
   const renderAppointment = (appointment: Appointment) => (
     <div key={appointment.id} className="py-2">
@@ -180,10 +222,10 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
               id={`${dock.id}-${check.id}`}
               checked={state[check.id] || false}
               onCheckedChange={(checked) => handler(check.id, !!checked)}
-              disabled={isCompleted}
+              disabled={isCompleted || isEditing}
               aria-labelledby={`${dock.id}-${check.id}-label`}
             />
-            <Label htmlFor={`${dock.id}-${check.id}`} id={`${dock.id}-${check.id}-label`} className={cn("text-xs", isCompleted && "text-muted-foreground line-through")}>
+            <Label htmlFor={`${dock.id}-${check.id}`} id={`${dock.id}-${check.id}-label`} className={cn("text-xs", (isCompleted || isEditing) && "text-muted-foreground line-through")}>
               {check.label}
             </Label>
           </div>
@@ -192,7 +234,7 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
       <Button
         size="sm"
         onClick={completeAction}
-        disabled={isCompleted}
+        disabled={isCompleted || isEditing}
         className="w-full md:w-auto"
         variant={isCompleted ? "secondary" : "default"}
       >
@@ -206,7 +248,9 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-headline text-primary">Dock {dock.number} Details</DialogTitle>
+          <DialogTitle className="text-2xl font-headline text-primary">
+            {isEditing ? `Editing Dock ${dock.number}` : `Dock ${dock.number} Details`}
+          </DialogTitle>
           <DialogDescription>
             {dock.type === 'shipping' ? 'Shipping' : 'Receiving'} Dock
           </DialogDescription>
@@ -214,27 +258,61 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
 
         <ScrollArea className="flex-grow pr-2 -mr-2">
           <div className="space-y-4 py-4">
-            <div className="flex items-center space-x-2">
-              <StatusIcon className={cn("h-5 w-5",
-                dock.status === 'available' && 'text-success',
-                dock.status === 'occupied' && 'text-destructive',
-                dock.status === 'maintenance' && 'text-warning',
-                dock.status === 'scheduled' && 'text-primary'
-              )} />
-              <Badge variant={config.badgeVariant} className="text-sm">{config.label}</Badge>
-            </div>
-
-            <Separator />
+            {isEditing ? (
+              <div className="space-y-4">
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select value={editedStatus} onValueChange={(value) => setEditedStatus(value as DockStatus)}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {dockStatusesForSelect.map(s => (
+                        <SelectItem key={s} value={s}>{statusConfigs[s].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+                
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter notes for this dock..."
+                      value={editedNotes}
+                      onChange={(e) => setEditedNotes(e.target.value)}
+                      rows={4}
+                    />
+                  </FormControl>
+                </FormItem>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center space-x-2">
+                  <StatusIcon className={cn("h-5 w-5",
+                    dock.status === 'available' && 'text-success',
+                    dock.status === 'occupied' && 'text-destructive',
+                    dock.status === 'maintenance' && 'text-warning',
+                    dock.status === 'scheduled' && 'text-primary'
+                  )} />
+                  <Badge variant={currentDockStatusConfig.badgeVariant} className="text-sm">{currentDockStatusConfig.label}</Badge>
+                </div>
+                 <Separator />
+              </>
+            )}
 
             {(dock.status === 'occupied' || dock.status === 'scheduled') && (
               <div>
                 <h4 className="font-medium text-sm mb-1">Current Assignment</h4>
                 {dock.currentCarrier && <p className="text-sm">Carrier: <span className="text-muted-foreground">{dock.currentCarrier}</span></p>}
                 {dock.currentTrailer && <p className="text-sm">Trailer: <span className="text-muted-foreground">{dock.currentTrailer}</span></p>}
+                 {!dock.currentCarrier && !dock.currentTrailer && <p className="text-sm text-muted-foreground">No assignment details.</p>}
               </div>
             )}
             
-            {dock.status === 'occupied' && (
+            {dock.status === 'occupied' && !isEditing && (
               <Accordion type="multiple" value={openAccordionItems} onValueChange={setOpenAccordionItems} className="w-full">
                 <AccordionItem value="safety-checklists">
                   <AccordionTrigger className="text-base font-medium hover:no-underline">
@@ -267,8 +345,14 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
               </Accordion>
             )}
 
-
-            {dock.scheduledAppointments && dock.scheduledAppointments.length > 0 && (
+            {!isEditing && dock.notes && (
+              <div>
+                <h4 className="font-medium text-sm mb-1 flex items-center"><Paperclip className="h-4 w-4 mr-2 text-primary" />Notes</h4>
+                <p className="text-sm p-2 border rounded-md bg-muted/50 whitespace-pre-wrap">{dock.notes}</p>
+              </div>
+            )}
+            
+            {!isEditing && dock.scheduledAppointments && dock.scheduledAppointments.length > 0 && (
               <div>
                 <h4 className="font-medium text-sm mb-1 flex items-center"><ListChecks className="h-4 w-4 mr-2 text-primary" />Scheduled Appointments</h4>
                 <div className="max-h-48 overflow-y-auto border rounded-md p-2 divide-y">
@@ -277,28 +361,31 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
               </div>
             )}
 
-            {dock.notes && (
-              <div>
-                <h4 className="font-medium text-sm mb-1 flex items-center"><Paperclip className="h-4 w-4 mr-2 text-primary" />Notes</h4>
-                <p className="text-sm p-2 border rounded-md bg-muted/50">{dock.notes}</p>
-              </div>
-            )}
+            {!isEditing && (
              <div>
                 <h4 className="font-medium text-sm mb-1 flex items-center"><History className="h-4 w-4 mr-2 text-primary" />Usage History</h4>
                 <Button variant="outline" size="sm" onClick={handleViewHistoryClick}>
                   View Full History
                 </Button>
               </div>
+            )}
           </div>
         </ScrollArea>
 
         <DialogFooter className="mt-auto pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button onClick={handleEditDockClick}><Edit3 className="h-4 w-4 mr-2"/>Edit Dock</Button>
+          {isEditing ? (
+            <>
+              <Button variant="outline" onClick={handleCancelEditClick}>Cancel</Button>
+              <Button onClick={handleSaveChangesClick}><Save className="h-4 w-4 mr-2"/>Save Changes</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose}>Close</Button>
+              <Button onClick={handleEditDockClick}><Edit3 className="h-4 w-4 mr-2"/>Edit Dock</Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
