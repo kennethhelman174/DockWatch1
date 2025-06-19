@@ -67,7 +67,7 @@ export const mockReceivingDocks: Dock[] = generateDocks(200, 223, "receiving");
 
 let allGeneratedMockDocks: Dock[] = [...mockShippingDocks, ...mockReceivingDocks];
 
-// Set all docks to available and clear truck information
+// Set all docks to available and clear truck information and notes
 export const allMockDocks: Dock[] = allGeneratedMockDocks.map(dock => ({
   ...dock,
   status: "available",
@@ -76,7 +76,8 @@ export const allMockDocks: Dock[] = allGeneratedMockDocks.map(dock => ({
   occupiedSince: undefined,
   preUnloadingChecksCompleted: undefined,
   preReleaseChecksCompleted: undefined,
-  // Keep existing notes and scheduledAppointments
+  notes: undefined, // Clear notes
+  // Keep existing scheduledAppointments
 }));
 
 
