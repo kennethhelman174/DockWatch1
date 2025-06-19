@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -16,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 interface DockDetailsModalProps {
   dock: Dock | null;
@@ -37,10 +39,28 @@ const statusConfigs: Record<Dock['status'], StatusConfig> = {
 };
 
 export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProps) {
+  const { toast } = useToast();
+
   if (!dock) return null;
 
   const config = statusConfigs[dock.status];
   const StatusIcon = config.icon;
+
+  const handleViewHistoryClick = () => {
+    if (!dock) return;
+    toast({
+      title: "Feature In Progress",
+      description: `Viewing full history for Dock ${dock.number} is under development.`,
+    });
+  };
+
+  const handleEditDockClick = () => {
+    if (!dock) return;
+    toast({
+      title: "Feature In Progress",
+      description: `Editing capabilities for Dock ${dock.number} are under development.`,
+    });
+  };
 
   const renderAppointment = (appointment: Appointment) => (
     <div key={appointment.id} className="py-2">
@@ -98,8 +118,8 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
             )}
              <div>
                 <h4 className="font-medium text-sm mb-1 flex items-center"><History className="h-4 w-4 mr-2 text-primary" />Usage History</h4>
-                <Button variant="outline" size="sm" disabled>
-                  View Full History (Coming Soon)
+                <Button variant="outline" size="sm" onClick={handleViewHistoryClick}>
+                  View Full History
                 </Button>
               </div>
           </div>
@@ -107,7 +127,7 @@ export function DockDetailsModal({ dock, isOpen, onClose }: DockDetailsModalProp
         
         <DialogFooter className="mt-auto pt-4 border-t">
           <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button disabled><Edit3 className="h-4 w-4 mr-2"/>Edit Dock (Coming Soon)</Button>
+          <Button onClick={handleEditDockClick}><Edit3 className="h-4 w-4 mr-2"/>Edit Dock</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
