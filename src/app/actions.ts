@@ -3,6 +3,7 @@
 
 import { estimateArrivalTime as estimateArrivalTimeFlow, type EstimateArrivalTimeInput, type EstimateArrivalTimeOutput } from '@/ai/flows/estimate-arrival-time';
 import { getWeatherForecast as getWeatherForecastFlow, type GetWeatherForecastInput } from '@/ai/flows/get-weather-forecast-flow';
+import { getAppSupport as getAppSupportFlow, type AppSupportInput, type AppSupportOutput } from '@/ai/flows/app-support-flow'; // Added
 import type { WeatherForecastOutput } from '@/types';
 import { z } from 'zod';
 
@@ -49,6 +50,28 @@ export async function getAiWeatherForecast(
     }
     console.error("Error calling AI Weather Forecast flow:", e);
     const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while fetching weather forecast.";
+    return { error: errorMessage };
+  }
+}
+
+// New Server Action for App Support
+const AppSupportInputSchemaServer = z.object({
+  userQuestion: z.string().min(5, "Question must be at least 5 characters long."),
+});
+
+export async function getAppSupportResponse(
+  input: AppSupportInput
+): Promise<{ data?: AppSupportOutput; error?: string }> {
+  try {
+    const validatedInput = AppSupportInputSchemaServer.parse(input);
+    const result = await getAppSupportFlow(validatedInput);
+    return { data: result };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: `Validation failed: ${e.errors.map(err => `${err.path.join('.')} - ${err.message}`).join(', ')}` };
+    }
+    console.error("Error calling App Support AI flow:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while getting support.";
     return { error: errorMessage };
   }
 }
