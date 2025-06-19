@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast'; // Added
 
 export default function DigitalDisplayPage() {
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
-  const [actualCurrentTime, setActualCurrentTime] = React.useState(new Date()); 
+  const [actualCurrentTime, setActualCurrentTime] = React.useState<Date | null>(null); 
   const [displayTime, setDisplayTime] = React.useState<string | null>(null);
   const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null); // Added
   const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true); // Added
@@ -24,7 +24,7 @@ export default function DigitalDisplayPage() {
     setClientDocks(importedAllMockDocks);
 
     const now = new Date();
-    setActualCurrentTime(now);
+    setActualCurrentTime(now); // Set initial actualCurrentTime here
     setDisplayTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'}));
 
     const timerId = setInterval(() => {
@@ -86,7 +86,7 @@ export default function DigitalDisplayPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 px-4">
           {docks.map((dock) => (
-            <DigitalDockCard key={dock.id} dock={dock} currentTime={actualCurrentTime} />
+            actualCurrentTime && <DigitalDockCard key={dock.id} dock={dock} currentTime={actualCurrentTime} />
           ))}
         </div>
       )}
@@ -155,3 +155,4 @@ export default function DigitalDisplayPage() {
     </div>
   );
 }
+
