@@ -11,17 +11,23 @@ import { cn } from '@/lib/utils';
 
 export default function DigitalDisplayPage() {
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
-  const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [actualCurrentTime, setActualCurrentTime] = React.useState(new Date()); // For calculations
+  const [displayTime, setDisplayTime] = React.useState<string | null>(null); // For display in header
 
   React.useEffect(() => {
     // Initialize docks from mock data on client side
     setClientDocks(importedAllMockDocks);
-  }, []);
 
-  React.useEffect(() => {
+    // Set initial display time and actual time on client mount
+    const now = new Date();
+    setActualCurrentTime(now);
+    setDisplayTime(now.toLocaleTimeString());
+
     const timerId = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 30000); // Update current time every 30 seconds for duration display
+      const newNow = new Date();
+      setActualCurrentTime(newNow); // Update Date object for calculations
+      setDisplayTime(newNow.toLocaleTimeString()); // Update string for display
+    }, 30000); // Update current time every 30 seconds
 
     return () => clearInterval(timerId);
   }, []);
@@ -57,7 +63,7 @@ export default function DigitalDisplayPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 px-4">
           {docks.map((dock) => (
-            <DigitalDockCard key={dock.id} dock={dock} currentTime={currentTime} />
+            <DigitalDockCard key={dock.id} dock={dock} currentTime={actualCurrentTime} />
           ))}
         </div>
       )}
@@ -89,7 +95,7 @@ export default function DigitalDisplayPage() {
     <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
       <header className="p-4 bg-background shadow-md">
         <h1 className="text-4xl font-extrabold text-primary tracking-tight">DockWatch - Live Status</h1>
-         <p className="text-muted-foreground">Last updated: {currentTime.toLocaleTimeString()}</p>
+         <p className="text-muted-foreground">Last updated: {displayTime !== null ? displayTime : 'Loading...'}</p>
       </header>
       <ScrollArea className="flex-grow p-2">
         <div className="space-y-6">
