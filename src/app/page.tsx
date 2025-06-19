@@ -1,10 +1,11 @@
+
 "use client";
 
 import * as React from 'react';
 import { DockList } from '@/components/DockList';
 import { DockFilterControls, type DockFilters } from '@/components/DockFilterControls';
 import { DockDetailsModal } from '@/components/DockDetailsModal';
-import { mockShippingDocks, mockReceivingDocks, allMockDocks } from '@/constants/mockData';
+import { allMockDocks as importedAllMockDocks } from '@/constants/mockData';
 import type { Dock } from '@/types';
 import { Separator } from '@/components/ui/separator';
 
@@ -16,6 +17,12 @@ export default function DashboardPage() {
   });
   const [selectedDock, setSelectedDock] = React.useState<Dock | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
+
+  React.useEffect(() => {
+    // Initialize docks data on the client side after hydration
+    setClientDocks(importedAllMockDocks);
+  }, []);
 
   const handleFilterChange = (newFilters: DockFilters) => {
     setFilters(newFilters);
@@ -32,7 +39,7 @@ export default function DashboardPage() {
   };
 
   const filteredDocks = React.useMemo(() => {
-    return allMockDocks.filter((dock) => {
+    return clientDocks.filter((dock) => {
       const typeMatch = filters.type === 'all' || dock.type === filters.type;
       const availabilityMatch = filters.availability === 'all' || dock.status === filters.availability;
       const searchTermMatch =
@@ -42,7 +49,7 @@ export default function DashboardPage() {
         dock.currentTrailer?.toLowerCase().includes(filters.searchTerm.toLowerCase());
       return typeMatch && availabilityMatch && searchTermMatch;
     });
-  }, [filters]);
+  }, [filters, clientDocks]);
 
   const shippingDocksToDisplay = filters.type === 'receiving' ? [] : filteredDocks.filter(d => d.type === 'shipping');
   const receivingDocksToDisplay = filters.type === 'shipping' ? [] : filteredDocks.filter(d => d.type === 'receiving');
