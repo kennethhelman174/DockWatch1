@@ -29,24 +29,6 @@ export default function DigitalDisplayPage() {
       setDisplayTime(newNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})); 
     }, 30000); 
 
-    // Fetch daily safety tip
-    const fetchSafetyTip = async () => {
-      setIsSafetyTipLoading(true);
-      const result = await getAiDailySafetyTip();
-      if (result.data?.safetyTip) {
-        setDailySafetyTip(result.data.safetyTip);
-      } else if (result.error) {
-        console.error("Failed to load safety tip for digital display:", result.error);
-        toast({ // Use toast on digital display as well, though it might be less visible
-          title: "Safety Tip Error",
-          description: "Could not load the daily safety tip.",
-          variant: "destructive",
-        });
-         setDailySafetyTip(null);
-      }
-      setIsSafetyTipLoading(false);
-    };
-    fetchSafetyTip();
 
     return () => clearInterval(timerId);
   }, [toast]);
