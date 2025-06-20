@@ -16,8 +16,6 @@ export default function DigitalDisplayPage() {
   const [clientDocks, setClientDocks] = React.useState<Dock[]>([]);
   const [actualCurrentTime, setActualCurrentTime] = React.useState<Date | null>(null); 
   const [displayTime, setDisplayTime] = React.useState<string | null>(null);
-  const [dailySafetyTip, setDailySafetyTip] = React.useState<string | null>(null); // Added
-  const [isSafetyTipLoading, setIsSafetyTipLoading] = React.useState(true); // Added
   const { toast } = useToast(); // Added
 
   React.useEffect(() => {
