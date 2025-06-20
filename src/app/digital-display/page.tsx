@@ -101,14 +101,7 @@ export default function DigitalDisplayPage() {
                 <p className="text-muted-foreground">Last updated: {displayTime !== null ? displayTime : 'Loading...'}</p>
             </div>
             <div className="w-1/3 max-w-md ml-4">
-                <SafetyTipDisplay 
-                    tip={dailySafetyTip} 
-                    isLoading={isSafetyTipLoading}
-                    className="bg-transparent border-0 shadow-none"
-                    titleClassName="text-base text-primary"
-                    contentClassName="text-xs !pt-0 !pb-0"
                 />
-            </div>
         </div>
       </header>
       <ScrollArea className="flex-grow p-2">
