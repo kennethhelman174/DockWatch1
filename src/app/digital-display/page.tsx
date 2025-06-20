@@ -8,8 +8,6 @@ import type { Dock } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { SafetyTipDisplay } from '@/components/SafetyTipDisplay'; // Added
-import { getAiDailySafetyTip } from '@/app/actions'; // Added
 import { useToast } from '@/hooks/use-toast'; // Added
 
 export default function DigitalDisplayPage() {
