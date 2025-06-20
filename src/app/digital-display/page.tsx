@@ -92,6 +92,7 @@ export default function DigitalDisplayPage() {
   );
 
 
+  export default function DigitalDisplayPage() {
   return (
     <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-900 text-foreground">
       <header className="p-4 bg-background shadow-md">
