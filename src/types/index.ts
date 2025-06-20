@@ -44,27 +44,6 @@ export interface FacilityAlert {
   timestamp: string; // ISO string
 }
 
-// For client-side display of weather, potentially simplified from Genkit output
-export interface WeatherAlertDisplay {
-  location: string;
-  temperature: string;
-  condition: string;
-  iconName: 'CloudSun' | 'CloudMoon' | 'Cloud' | 'CloudRain' | 'CloudSnow' | 'CloudLightning' | 'Wind' | 'Sun' | 'Moon' | 'Thermometer'; // Lucide icon names
-  lastUpdated: string; // Formatted time string
-  shortTermForecast?: string;
-  precipitationChance?: string;
-}
-
-// Output from Genkit Weather Flow
-export type WeatherForecastOutput = {
-  location: string;
-  temperature: string;
-  condition: string;
-  iconName: string; // Suggestion for Lucide icon
-  shortTermForecast: string;
-  precipitationChance?: string;
-};
-
 export type UserRole = 'admin' | 'shipping_coordinator' | 'dock_worker' | 'view_only';
 
 export interface AppUser {
