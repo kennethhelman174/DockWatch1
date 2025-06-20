@@ -11,7 +11,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertTriangle, Clock, BarChart, Route, Truck } from 'lucide-react';
 import type { EstimateArrivalTimeInput, EstimateArrivalTimeOutput } from '@/ai/flows/estimate-arrival-time';
-import { getAiEta } from '@/app/actions'; // Server action
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
