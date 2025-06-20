@@ -257,7 +257,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-2 -mr-2"> {/* Changed to flex-1 for better growth */}
+        <ScrollArea className="flex-1 pr-2 -mr-2">
           <div className="space-y-4 py-4">
             {isEditing ? (
               <div className="space-y-4">
@@ -319,25 +319,27 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-2">
-                    <div className="space-y-6 p-2 border rounded-md bg-card">
-                      {renderChecklist(
-                        "Pre-Unloading Safety Checks",
-                        preUnloadingChecks,
-                        preUnloadingState,
-                        (checkId, isChecked) => handleChecklistChange('preUnloading', checkId, isChecked),
-                        preUnloadingCompleted,
-                        () => handleCompleteChecklist('preUnloading')
-                      )}
-                      <Separator />
-                      {renderChecklist(
-                        "Pre-Release Safety Checks",
-                        preReleaseChecks,
-                        preReleaseState,
-                        (checkId, isChecked) => handleChecklistChange('preRelease', checkId, isChecked),
-                        preReleaseCompleted,
-                        () => handleCompleteChecklist('preRelease')
-                      )}
-                    </div>
+                    <ScrollArea className="max-h-[300px] pr-3">
+                      <div className="space-y-6 p-2 border rounded-md bg-card">
+                        {renderChecklist(
+                          "Pre-Unloading Safety Checks",
+                          preUnloadingChecks,
+                          preUnloadingState,
+                          (checkId, isChecked) => handleChecklistChange('preUnloading', checkId, isChecked),
+                          preUnloadingCompleted,
+                          () => handleCompleteChecklist('preUnloading')
+                        )}
+                        <Separator />
+                        {renderChecklist(
+                          "Pre-Release Safety Checks",
+                          preReleaseChecks,
+                          preReleaseState,
+                          (checkId, isChecked) => handleChecklistChange('preRelease', checkId, isChecked),
+                          preReleaseCompleted,
+                          () => handleCompleteChecklist('preRelease')
+                        )}
+                      </div>
+                    </ScrollArea>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -370,7 +372,7 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
           </div>
         </ScrollArea>
 
-        <DialogFooter className="mt-auto pt-4 border-t"> {/* Ensure footer is outside ScrollArea and at bottom */}
+        <DialogFooter className="mt-auto pt-4 border-t">
           {isEditing ? (
             <>
               <Button variant="outline" onClick={handleCancelEditClick}>Cancel</Button>
@@ -387,3 +389,4 @@ export function DockDetailsModal({ dock, isOpen, onClose, onUpdateDock }: DockDe
     </Dialog>
   );
 }
+
